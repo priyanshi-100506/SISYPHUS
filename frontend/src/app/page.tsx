@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Terminal } from "lucide-react";
+import { ArrowRight, Terminal, CheckCircle2, ShieldCheck, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { LoopMinimap } from "@/components/ui/loop-minimap";
@@ -11,7 +11,7 @@ import { CreateProjectModal } from "@/components/projects/create-project-modal";
 export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Demo run data for live interactive preview on landing page
+  // Demo run trace data for live interactive preview
   const demoTotalSteps = 31;
   const demoFlaggedRanges = [
     {
@@ -28,7 +28,7 @@ export default function Home() {
       <header className="border-b border-border-soft bg-bg/80 backdrop-blur-md sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="font-sans font-bold text-lg tracking-[0.18em] text-text uppercase">
+            <span className="font-sans font-bold text-lg tracking-[0.2em] text-text uppercase">
               SISYPHUS
             </span>
             <span className="text-xs px-2 py-0.5 rounded bg-surface-2 text-faint font-mono border border-border-soft">
@@ -54,19 +54,20 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Hero Section with Diagonal Paint Split */}
+      {/* Hero Section with Diagonal Impasto Paint Split Backdrop */}
       <section className="relative overflow-hidden pt-16 pb-24 border-b border-border-soft">
-        {/* Background Hard Diagonal Split */}
-        <div className="absolute inset-0 pointer-events-none opacity-40">
+        {/* SVG Hard Diagonal Split */}
+        <div className="absolute inset-0 pointer-events-none opacity-45">
           <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 1000 600">
             <defs>
               <linearGradient id="hero-oxblood-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#3A0913" />
-                <stop offset="100%" stopColor="#12080C" />
+                <stop offset="0%" stopColor="#3D0612" />
+                <stop offset="50%" stopColor="#630D20" />
+                <stop offset="100%" stopColor="#0B0508" />
               </linearGradient>
             </defs>
-            <polygon points="450,0 1000,0 1000,600 350,600" fill="url(#hero-oxblood-grad)" />
-            <line x1="450" y1="0" x2="350" y2="600" stroke="#C65A74" strokeWidth="2" opacity="0.6" />
+            <polygon points="440,0 1000,0 1000,600 340,600" fill="url(#hero-oxblood-grad)" />
+            <line x1="440" y1="0" x2="340" y2="600" stroke="#E05670" strokeWidth="2.5" opacity="0.75" />
           </svg>
         </div>
 
@@ -83,7 +84,7 @@ export default function Home() {
 
             <div className="flex items-center gap-4 pt-2">
               <Link href="/demo">
-                <Button size="lg" className="gap-2">
+                <Button size="lg" className="gap-2 glow-accent">
                   Try the demo
                   <ArrowRight className="w-4 h-4" />
                 </Button>
@@ -96,11 +97,17 @@ export default function Home() {
                 Create project
               </Button>
             </div>
+
+            <div className="pt-4 flex items-center gap-6 text-xs text-faint font-mono">
+              <span>✓ Synchronous detection</span>
+              <span>✓ REST & Python SDK</span>
+              <span>✓ Idempotent writes</span>
+            </div>
           </div>
 
-          {/* Right Column: Live Run Demo Panel */}
+          {/* Right Column: Live Run Interactive Demo Panel */}
           <div className="lg:col-span-6">
-            <div className="bg-surface border border-border rounded-card p-6 shadow-2xl box-ridge space-y-5">
+            <div className="bg-surface/90 border border-border rounded-card p-6 shadow-2xl box-ridge space-y-5 glow-stuck">
               <div className="flex items-center justify-between pb-3 border-b border-border-soft">
                 <div className="flex items-center gap-3">
                   <span className="font-mono text-xs text-faint font-semibold">
@@ -119,16 +126,24 @@ export default function Home() {
                 flaggedRanges={demoFlaggedRanges}
               />
 
-              {/* Finding Notice */}
-              <div className="bg-stuck-bg border border-stuck/30 rounded p-3 text-xs font-sans text-text">
-                <p className="font-semibold text-stuck mb-0.5">Repeated tool call</p>
-                <p>search ran 6 times with the same input (steps 4-9). About 2,184 tokens wasted.</p>
+              {/* Quantified Finding Notice */}
+              <div className="bg-stuck-bg/90 border border-stuck/30 rounded-tile p-3.5 text-xs font-sans text-text">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-semibold text-stuck">Repeated tool call</span>
+                  <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-stuck-fill text-text border border-stuck/30">
+                    High severity
+                  </span>
+                </div>
+                <p className="text-muted leading-relaxed">
+                  search ran 6 times with the same input (steps 4-9). About 2,184 tokens, 1.8 s, $0.03 wasted.
+                </p>
               </div>
 
-              <div className="pt-1 flex justify-end">
+              <div className="pt-1 flex justify-between items-center text-xs font-mono">
+                <span className="text-faint">Waste estimated: 2,184 tokens ($0.03)</span>
                 <Link
                   href="/demo"
-                  className="text-xs text-accent hover:underline font-sans font-medium inline-flex items-center gap-1"
+                  className="text-accent hover:underline font-sans font-medium inline-flex items-center gap-1"
                 >
                   Explore demo run →
                 </Link>
@@ -142,33 +157,36 @@ export default function Home() {
       <section className="py-20 border-b border-border-soft bg-surface">
         <div className="max-w-6xl mx-auto px-6">
           <div className="mb-12">
-            <h2 className="font-display text-3xl font-semibold text-text">
+            <span className="text-xs text-accent font-mono uppercase tracking-widest font-medium">
+              Architecture Workflow
+            </span>
+            <h2 className="font-display text-3xl font-semibold text-text mt-1">
               How it works
             </h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="p-5 bg-surface-2 border border-border-soft rounded-card space-y-3">
+            <div className="p-6 bg-surface-2 border border-border-soft rounded-card space-y-3 box-ridge">
               <div className="w-8 h-8 rounded-full bg-accent-bg text-accent flex items-center justify-center font-mono text-sm font-bold">
                 1
               </div>
               <h3 className="font-sans font-semibold text-text">1. Create project</h3>
               <p className="text-xs text-muted leading-relaxed">
-                Create a project and copy its key.
+                Create a project and copy its API key.
               </p>
             </div>
 
-            <div className="p-5 bg-surface-2 border border-border-soft rounded-card space-y-3">
+            <div className="p-6 bg-surface-2 border border-border-soft rounded-card space-y-3 box-ridge">
               <div className="w-8 h-8 rounded-full bg-accent-bg text-accent flex items-center justify-center font-mono text-sm font-bold">
                 2
               </div>
               <h3 className="font-sans font-semibold text-text">2. Post events</h3>
               <p className="text-xs text-muted leading-relaxed">
-                POST your agent's tool calls to the API.
+                POST your agent's tool calls to the REST API.
               </p>
             </div>
 
-            <div className="p-5 bg-surface-2 border border-border-soft rounded-card space-y-3">
+            <div className="p-6 bg-surface-2 border border-border-soft rounded-card space-y-3 box-ridge">
               <div className="w-8 h-8 rounded-full bg-stuck-bg text-stuck flex items-center justify-center font-mono text-sm font-bold">
                 3
               </div>
@@ -178,7 +196,7 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="p-5 bg-surface-2 border border-border-soft rounded-card space-y-3">
+            <div className="p-6 bg-surface-2 border border-border-soft rounded-card space-y-3 box-ridge">
               <div className="w-8 h-8 rounded-full bg-ok-bg text-ok flex items-center justify-center font-mono text-sm font-bold">
                 4
               </div>
