@@ -3,8 +3,9 @@ from sqlalchemy import select, func
 from fastapi import HTTPException
 from datetime import datetime, timezone
 
-from app.db.models import Run, Project, Event
+from app.db.models import Run, Project, Event, Finding
 from app.api.schemas.runs import RunCreate, RunOut, CompleteRunIn
+from app.api.schemas.findings import FindingOut
 from app.analysis import engine as analysis_engine
 
 async def create_run(db: AsyncSession, project: Project, data: RunCreate) -> RunOut:
@@ -30,6 +31,23 @@ async def get_run_by_id(db: AsyncSession, project: Project, run_id) -> RunOut:
             detail={"error": {"code": "NOT_FOUND", "message": "Run not found"}}
         )
     return RunOut.model_validate(run)
+
+async def get_run_findings(db: AsyncSession, project: Project, run_id) -> list[FindingOut]:
+    run_res = await db.execute(
+        select(Run).where(Run.id == run_id, Run.project_id == project.id)
+    )
+    run = run_res.scalar_one_or_none()
+    if not run:
+        raise HTTPException(
+            status_code=404,
+            detail={"error": {"code": "NOT_FOUND", "message": "Run not found"}}
+        )
+
+    findings_res = await db.execute(
+        select(Finding).where(Finding.run_id == run_id).order_by(Finding.step_start.asc())
+    )
+    findings = findings_res.scalars().all()
+    return [FindingOut.model_validate(f) for f in findings]
 
 async def complete_run(db: AsyncSession, project: Project, run_id, data: CompleteRunIn) -> RunOut:
     res = await db.execute(
@@ -67,7 +85,7 @@ async def complete_run(db: AsyncSession, project: Project, run_id, data: Complet
     await db.commit()
     await db.refresh(run)
 
-    # Trigger analysis stub
+    # Trigger analysis
     await analysis_engine.analyze(run.id, db)
 
     return RunOut.model_validate(run)

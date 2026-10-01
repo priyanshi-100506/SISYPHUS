@@ -71,3 +71,33 @@ async def test_completed_run_event_rejection_409(client):
     }
     ev_res = await client.post(f"/api/v1/runs/{run_id}/events", headers=headers, json=events_payload)
     assert ev_res.status_code == 409
+
+@pytest.mark.asyncio
+async def test_run_completion_triggers_findings(client):
+    proj_res = await client.post("/api/v1/projects", json={"name": "Findings Test", "slug": "findings-test"})
+    headers = {"Authorization": f"Bearer {proj_res.json()['api_key']}"}
+    run_res = await client.post("/api/v1/runs", headers=headers, json={})
+    run_id = run_res.json()["id"]
+
+    # Send 3 identical tool events to trigger REPEATED_TOOL detector
+    events_payload = {
+        "events": [
+            {
+                "sequence_number": i,
+                "event_type": "tool",
+                "tool_name": "search",
+                "input": {"q": "duplicate"},
+                "tokens_in": 100,
+                "tokens_out": 20,
+                "timestamp": f"2026-10-01T10:00:0{i}Z"
+            }
+            for i in range(1, 4)
+        ]
+    }
+    await client.post(f"/api/v1/runs/{run_id}/events", headers=headers, json=events_payload)
+
+    # Complete run
+    comp_res = await client.post(f"/api/v1/runs/{run_id}/complete", headers=headers, json={"status": "completed"})
+    assert comp_res.status_code == 200
+    assert comp_res.json()["analyzed_at"] is not None
+
