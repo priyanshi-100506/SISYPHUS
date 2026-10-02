@@ -24,3 +24,16 @@ class RunOut(BaseModel):
 
 class CompleteRunIn(BaseModel):
     status: str = "completed"
+
+class RunMetricsOut(BaseModel):
+    total_steps: int
+    total_tokens_in: int
+    total_tokens_out: int
+    total_tokens: int
+    estimated_cost: float
+    duration_ms: Optional[int] = None
+    findings_count: int
+    waste_tokens: int
+    waste_ms: int
+    waste_cost: float
+

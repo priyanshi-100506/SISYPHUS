@@ -5,7 +5,7 @@ from uuid import UUID
 from app.db.session import get_db
 from app.db.models import Project
 from app.core.auth import get_project_by_api_key
-from app.api.schemas.runs import RunCreate, RunOut, CompleteRunIn
+from app.api.schemas.runs import RunCreate, RunOut, CompleteRunIn, RunMetricsOut
 from app.api.schemas.findings import FindingOut
 from app.services import run_service
 
@@ -35,6 +35,14 @@ async def get_run_findings(
 ):
     return await run_service.get_run_findings(db, project, id)
 
+@router.get("/{id}/metrics", response_model=RunMetricsOut)
+async def get_run_metrics(
+    id: UUID,
+    db: AsyncSession = Depends(get_db),
+    project: Project = Depends(get_project_by_api_key)
+):
+    return await run_service.get_run_metrics(db, project, id)
+
 @router.post("/{id}/complete", response_model=RunOut)
 async def complete_run(
     id: UUID,
@@ -43,3 +51,4 @@ async def complete_run(
     project: Project = Depends(get_project_by_api_key)
 ):
     return await run_service.complete_run(db, project, id, data)
+

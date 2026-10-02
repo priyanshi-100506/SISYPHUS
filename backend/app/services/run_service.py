@@ -4,7 +4,7 @@ from fastapi import HTTPException
 from datetime import datetime, timezone
 
 from app.db.models import Run, Project, Event, Finding
-from app.api.schemas.runs import RunCreate, RunOut, CompleteRunIn
+from app.api.schemas.runs import RunCreate, RunOut, CompleteRunIn, RunMetricsOut
 from app.api.schemas.findings import FindingOut
 from app.analysis import engine as analysis_engine
 
@@ -89,3 +89,42 @@ async def complete_run(db: AsyncSession, project: Project, run_id, data: Complet
     await analysis_engine.analyze(run.id, db)
 
     return RunOut.model_validate(run)
+
+async def get_run_metrics(db: AsyncSession, project: Project, run_id) -> RunMetricsOut:
+    """Aggregate waste stats from findings for a run's metrics dashboard."""
+    res = await db.execute(
+        select(Run).where(Run.id == run_id, Run.project_id == project.id)
+    )
+    run = res.scalar_one_or_none()
+    if not run:
+        raise HTTPException(
+            status_code=404,
+            detail={"error": {"code": "NOT_FOUND", "message": "Run not found"}}
+        )
+
+    findings_res = await db.execute(
+        select(Finding).where(Finding.run_id == run_id)
+    )
+    findings = findings_res.scalars().all()
+
+    waste_tokens = sum(f.waste_tokens for f in findings)
+    waste_ms = sum(f.waste_ms for f in findings)
+    waste_cost = float(sum(f.waste_cost for f in findings))
+
+    duration_ms = None
+    if run.started_at and run.finished_at:
+        duration_ms = int((run.finished_at - run.started_at).total_seconds() * 1000)
+
+    return RunMetricsOut(
+        total_steps=run.total_steps,
+        total_tokens_in=run.total_tokens_in,
+        total_tokens_out=run.total_tokens_out,
+        total_tokens=run.total_tokens_in + run.total_tokens_out,
+        estimated_cost=float(run.estimated_cost),
+        duration_ms=duration_ms,
+        findings_count=len(findings),
+        waste_tokens=waste_tokens,
+        waste_ms=waste_ms,
+        waste_cost=waste_cost,
+    )
+
