@@ -103,7 +103,7 @@ export const FindingCard: React.FC<FindingCardProps> = ({
             className="flex items-center gap-1.5 text-xs font-medium text-accent hover:underline focus:outline-none mb-1.5"
           >
             <span className="flex items-center gap-1">
-              ✨ Explanation (by Gemini AI)
+              Explanation (by Gemini AI)
             </span>
             {showAiExplanation ? (
               <ChevronUp className="w-3 h-3 text-accent" />

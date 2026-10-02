@@ -164,7 +164,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
         ) : (
           <div className="space-y-4 font-sans">
             <div className="p-3 bg-stuck-bg border border-stuck/30 rounded text-xs text-stuck font-medium">
-              ⚠️ Save your API key now. You won't see this key again!
+              Save your API key now. You won't see this key again!
             </div>
 
             <div>
