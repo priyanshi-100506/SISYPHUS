@@ -1,65 +1,96 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, Plus, RefreshCw, AlertTriangle, CheckCircle, Clock } from "lucide-react";
+import { useParams } from "next/navigation";
+import { ArrowLeft, Plus, RefreshCw, AlertTriangle } from "lucide-react";
 import { StatTile } from "@/components/ui/stat-tile";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { CreateProjectModal } from "@/components/projects/create-project-modal";
+import { fetchProject, fetchProjectRuns, ProjectData, RunData } from "@/lib/api";
 
 export default function ProjectDashboardPage() {
+  const params = useParams();
+  const projectId = params?.id as string;
+
+  const [project, setProject] = useState<ProjectData | null>(null);
+  const [runs, setRuns] = useState<RunData[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [filter, setFilter] = useState<"all" | "loops" | "failed">("all");
 
-  const mockRuns = [
+  const loadDashboardData = async () => {
+    setLoading(true);
+    try {
+      if (projectId && projectId !== "demo") {
+        const [projData, runsData] = await Promise.all([
+          fetchProject(projectId),
+          fetchProjectRuns(projectId),
+        ]);
+        setProject(projData);
+        setRuns(runsData);
+      }
+    } catch (err) {
+      console.warn("API fetch error, falling back to mock data:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadDashboardData();
+  }, [projectId]);
+
+  // Fallback mock runs if backend runs array is empty
+  const defaultRuns = [
     {
       id: "run_8f31",
-      display_id: "#8F31",
       status: "completed",
-      steps: 12,
-      duration: "4.2 s",
-      tokens: "3.4k",
-      cost: "$0.02",
-      ago: "2m ago",
+      total_steps: 12,
+      started_at: new Date(Date.now() - 120000).toISOString(),
+      finished_at: new Date(Date.now() - 115800).toISOString(),
+      total_tokens_in: 2400,
+      total_tokens_out: 1000,
+      estimated_cost: "0.02",
+      input: "Summarize research on quantum computing",
     },
     {
       id: "run_8f30",
-      display_id: "#8F30",
       status: "loop",
-      steps: 31,
-      duration: "18.4 s",
-      tokens: "8.4k",
-      cost: "$0.08",
-      ago: "14m ago",
+      total_steps: 31,
+      started_at: new Date(Date.now() - 840000).toISOString(),
+      finished_at: new Date(Date.now() - 821600).toISOString(),
+      total_tokens_in: 5800,
+      total_tokens_out: 2600,
+      estimated_cost: "0.08",
+      input: "Find three hotels in Paris with available rooms",
     },
     {
       id: "run_8f29",
-      display_id: "#8F29",
       status: "completed",
-      steps: 9,
-      duration: "3.1 s",
-      tokens: "2.8k",
-      cost: "$0.01",
-      ago: "1h ago",
-    },
-    {
-      id: "run_8f28",
-      display_id: "#8F28",
-      status: "timeout",
-      steps: 42,
-      duration: "42.2 s",
-      tokens: "14.1k",
-      cost: "$0.14",
-      ago: "3h ago",
+      total_steps: 9,
+      started_at: new Date(Date.now() - 3600000).toISOString(),
+      finished_at: new Date(Date.now() - 3596900).toISOString(),
+      total_tokens_in: 2000,
+      total_tokens_out: 800,
+      estimated_cost: "0.01",
+      input: "Extract entity names from text block",
     },
   ];
 
-  const filteredRuns = mockRuns.filter((r) => {
+  const displayRuns = runs.length > 0 ? runs : (defaultRuns as any[]);
+
+  const filteredRuns = displayRuns.filter((r) => {
     if (filter === "loops") return r.status === "loop";
     if (filter === "failed") return r.status === "failed" || r.status === "timeout";
     return true;
   });
+
+  const totalRunsCount = displayRuns.length;
+  const loopCount = displayRuns.filter((r) => r.status === "loop").length;
+  const failedCount = displayRuns.filter((r) => r.status === "failed" || r.status === "timeout").length;
+  const totalTokens = displayRuns.reduce((acc, r) => acc + (r.total_tokens_in || 0) + (r.total_tokens_out || 0), 0);
 
   return (
     <div className="min-h-screen bg-bg text-text">
@@ -74,25 +105,31 @@ export default function ProjectDashboardPage() {
                 Project Dashboard
               </span>
               <h1 className="font-display text-2xl font-semibold text-text mt-0.5">
-                Research Agent
+                {project ? project.name : "Research Agent"}
               </h1>
             </div>
           </div>
 
-          <Button size="sm" onClick={() => setIsModalOpen(true)}>
-            <Plus className="w-4 h-4" />
-            New project
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button size="sm" variant="secondary" onClick={loadDashboardData} disabled={loading}>
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+              Refresh
+            </Button>
+            <Button size="sm" onClick={() => setIsModalOpen(true)}>
+              <Plus className="w-4 h-4" />
+              New project
+            </Button>
+          </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
         {/* Stat Tiles Row */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatTile label="Total runs" value={143} />
-          <StatTile label="Detected loops" value={7} isStuck={true} subtext="Waste: 18.2k tok" />
-          <StatTile label="Failed runs" value={12} />
-          <StatTile label="Total tokens" value="184,291" subtext="Avg 1.2k/run" />
+          <StatTile label="Total runs" value={totalRunsCount} />
+          <StatTile label="Detected loops" value={loopCount} isStuck={loopCount > 0} subtext={loopCount > 0 ? "Action required" : "Clean execution"} />
+          <StatTile label="Failed runs" value={failedCount} />
+          <StatTile label="Total tokens" value={totalTokens.toLocaleString()} subtext={totalRunsCount > 0 ? `Avg ~${Math.round(totalTokens / totalRunsCount).toLocaleString()}/run` : ""} />
         </div>
 
         {/* Recent Runs Table */}
@@ -132,26 +169,32 @@ export default function ProjectDashboardPage() {
           </div>
 
           <div className="space-y-2">
-            {filteredRuns.map((run) => (
-              <Link
-                key={run.id}
-                href="/demo"
-                className="group flex items-center justify-between p-3.5 bg-surface-2/60 border border-border-soft rounded-tile hover:bg-surface-2 hover:border-border transition-all duration-150 font-mono text-xs"
-              >
-                <div className="flex items-center gap-4">
-                  <StatusBadge status={run.status} />
-                  <span className="text-text font-semibold">{run.display_id}</span>
-                  <span className="text-muted font-sans">{run.steps} steps</span>
-                </div>
+            {filteredRuns.map((run) => {
+              const runIdStr = typeof run.id === "string" ? run.id : String(run.id);
+              const displayId = "#" + runIdStr.substring(0, 6).toUpperCase();
+              const tokensTotal = (run.total_tokens_in || 0) + (run.total_tokens_out || 0);
 
-                <div className="flex items-center gap-6 text-faint font-tabular">
-                  <span>{run.duration}</span>
-                  <span>{run.tokens} tokens</span>
-                  <span>{run.cost}</span>
-                  <span className="text-muted">{run.ago}</span>
-                </div>
-              </Link>
-            ))}
+              return (
+                <Link
+                  key={runIdStr}
+                  href={`/demo?run_id=${runIdStr}`}
+                  className="group flex items-center justify-between p-3.5 bg-surface-2/60 border border-border-soft rounded-tile hover:bg-surface-2 hover:border-border transition-all duration-150 font-mono text-xs"
+                >
+                  <div className="flex items-center gap-4">
+                    <StatusBadge status={run.status} />
+                    <span className="text-text font-semibold">{displayId}</span>
+                    <span className="text-muted font-sans truncate max-w-xs">{run.input || `${run.total_steps || 0} steps`}</span>
+                  </div>
+
+                  <div className="flex items-center gap-6 text-faint font-tabular">
+                    <span>{run.total_steps || 0} steps</span>
+                    <span>{tokensTotal.toLocaleString()} tokens</span>
+                    <span>${Number(run.estimated_cost || 0).toFixed(2)}</span>
+                    <span className="text-muted">{run.started_at ? new Date(run.started_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "recently"}</span>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </main>
@@ -159,7 +202,9 @@ export default function ProjectDashboardPage() {
       <CreateProjectModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        onSuccess={loadDashboardData}
       />
     </div>
   );
 }
+

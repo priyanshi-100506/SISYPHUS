@@ -95,6 +95,18 @@ export async function fetchProjects(): Promise<ProjectData[]> {
   }
 }
 
+export async function fetchProject(id: string): Promise<ProjectData | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/projects/${id}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch (e) {
+    console.warn("Backend API unavailable for fetchProject, using fallback:", e);
+    return null;
+  }
+}
+
+
 export async function fetchProjectRuns(
   projectId: string,
   apiKey?: string
