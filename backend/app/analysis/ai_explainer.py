@@ -6,27 +6,25 @@ logger = logging.getLogger(__name__)
 
 async def generate_explanation(finding_type: str, evidence: Dict[str, Any]) -> str:
     """
-    Phase 5: Generates a 1-3 sentence plain-English explanation for a finding using evidence.
-    Falls back gracefully to template-based explainers if ANTHROPIC_API_KEY is not set.
+    Generates a 1-3 sentence plain-English explanation for a finding using evidence.
+    Uses Gemini API if GEMINI_API_KEY is set, otherwise falls back to template-based explanations.
     """
-    if settings.ANTHROPIC_API_KEY:
+    if settings.GEMINI_API_KEY:
         try:
-            import anthropic
-            client = anthropic.AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY)
+            import google.generativeai as genai
+            genai.configure(api_key=settings.GEMINI_API_KEY)
+            model = genai.GenerativeModel("gemini-2.5-flash")
             prompt = (
-                f"You are an AI reliability engineer analyzing an execution trace finding.\n"
+                f"You are an AI reliability engineer analyzing an agent execution trace finding.\n"
                 f"Finding Type: {finding_type}\n"
                 f"Evidence: {evidence}\n\n"
-                f"Provide a concise 1-2 sentence plain English explanation of why this happened and what waste it caused."
+                f"Provide a concise 1-2 sentence plain English explanation of why this happened "
+                f"and what waste it caused. Be specific about the tool names and counts from the evidence."
             )
-            response = await client.messages.create(
-                model="claude-3-5-sonnet-20241022",
-                max_tokens=150,
-                messages=[{"role": "user", "content": prompt}]
-            )
-            return response.content[0].text.strip()
+            response = model.generate_content(prompt)
+            return response.text.strip()
         except Exception as e:
-            logger.warning(f"Anthropic API call failed: {e}. Falling back to deterministic explanation template.")
+            logger.warning(f"Gemini API call failed: {e}. Falling back to deterministic explanation template.")
 
     # Fallback explanation templates
     if finding_type == "REPEATED_TOOL":
@@ -50,5 +48,5 @@ async def generate_explanation(finding_type: str, evidence: Dict[str, Any]) -> s
         tool_b = evidence.get("tool_b", "B")
         alts = evidence.get("alternations", 4)
         return f"The agent oscillated between tools '{tool_a}' and '{tool_b}' {alts} times without converging on a decision."
-    
+
     return "Redundant execution pattern detected based on rule-based analysis of events."
