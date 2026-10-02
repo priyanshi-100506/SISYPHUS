@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, timezone
+from typing import List, Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -9,7 +10,8 @@ from app.analysis.ai_explainer import generate_explanation
 
 logger = logging.getLogger(__name__)
 
-async def analyze(run_id, db: AsyncSession) -> List[Finding] if False else None:
+async def analyze(run_id, db: AsyncSession) -> None:
+
     """
     Runs deterministic analysis on a completed run and persists findings.
     """
