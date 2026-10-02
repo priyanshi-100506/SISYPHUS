@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, Play, FileText, Sparkles, Filter, AlertTriangle } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { ArrowLeft, RefreshCw, AlertTriangle } from "lucide-react";
 import { StatTile } from "@/components/ui/stat-tile";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { LoopMinimap, FlaggedRange } from "@/components/ui/loop-minimap";
@@ -11,15 +12,81 @@ import { FindingCard, Finding } from "@/components/findings/finding-card";
 import { EvidenceDrawer } from "@/components/findings/evidence-drawer";
 import { GuardSimulationModal } from "@/components/simulation/guard-simulation";
 import { Button } from "@/components/ui/button";
+import { fetchRunEvents, fetchRunFindings, fetchRunDetail, EventDataApi, FindingDataApi } from "@/lib/api";
 
 export default function DemoPage() {
+  const searchParams = useSearchParams();
+  const runId = searchParams?.get("run_id");
+
   const [selectedStep, setSelectedStep] = useState<number | null>(null);
   const [hoveredFinding, setHoveredFinding] = useState<Finding | null>(null);
   const [evidenceFinding, setEvidenceFinding] = useState<Finding | null>(null);
   const [simulationFinding, setSimulationFinding] = useState<Finding | null>(null);
 
-  // Mocked seed events for flawed run demo
-  const mockEvents: EventData[] = [
+  const [loading, setLoading] = useState(false);
+  const [liveRun, setLiveRun] = useState<any>(null);
+  const [liveEvents, setLiveEvents] = useState<EventData[]>([]);
+  const [liveFindings, setLiveFindings] = useState<Finding[]>([]);
+
+  const loadRunData = async () => {
+    if (!runId) return;
+    setLoading(true);
+    try {
+      const [detail, events, findings] = await Promise.all([
+        fetchRunDetail(runId),
+        fetchRunEvents(runId),
+        fetchRunFindings(runId),
+      ]);
+
+      if (detail) setLiveRun(detail);
+
+      if (events && events.length > 0) {
+        const mappedEvents: EventData[] = events.map((e: EventDataApi) => ({
+          sequence_number: e.sequence_number,
+          event_type: e.event_type as any,
+          tool_name: e.tool_name,
+          input_preview: e.input_preview || undefined,
+          output_preview: e.output_preview || undefined,
+          status: e.status,
+          tokens_in: e.tokens_in,
+          tokens_out: e.tokens_out,
+          latency_ms: e.latency_ms,
+          timestamp: e.timestamp,
+        }));
+        setLiveEvents(mappedEvents);
+      }
+
+      if (findings && findings.length > 0) {
+        const mappedFindings: Finding[] = findings.map((f: FindingDataApi) => ({
+          id: f.id,
+          type: f.type,
+          severity: f.severity as any,
+          step_start: f.step_start,
+          step_end: f.step_end,
+          description: f.description,
+          evidence: f.evidence,
+          waste_tokens: f.waste_tokens,
+          waste_ms: f.waste_ms,
+          waste_cost: f.waste_cost,
+          explanation: f.explanation || undefined,
+        }));
+        setLiveFindings(mappedFindings);
+      }
+    } catch (err) {
+      console.warn("Failed to fetch live run data, falling back to mock:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (runId) {
+      loadRunData();
+    }
+  }, [runId]);
+
+  // Default Mocked seed events for flawed run demo
+  const defaultEvents: EventData[] = [
     {
       sequence_number: 1,
       event_type: "think",
@@ -136,8 +203,8 @@ export default function DemoPage() {
     },
   ];
 
-  // Mock findings for demo run
-  const mockFindings: Finding[] = [
+  // Default Mock findings for demo run
+  const defaultFindings: Finding[] = [
     {
       id: "find_01",
       type: "REPEATED_TOOL",
@@ -154,7 +221,7 @@ export default function DemoPage() {
       waste_tokens: 2184,
       waste_ms: 1800,
       waste_cost: 0.0312,
-      explanation: "The agent loop failed to advance state after receiving initial search results, repeatedly triggering the identical search call.",
+      explanation: "The agent repeatedly called the 'search' tool with the exact same input, indicating it did not store or reuse the initial result.",
     },
     {
       id: "find_02",
@@ -175,12 +242,21 @@ export default function DemoPage() {
     },
   ];
 
-  const minimapFlaggedRanges: FlaggedRange[] = mockFindings.map((f) => ({
+  const events = liveEvents.length > 0 ? liveEvents : defaultEvents;
+  const findings = liveFindings.length > 0 ? liveFindings : defaultFindings;
+
+  const totalStepsCount = events.length;
+  const totalTokensCount = events.reduce((acc, e) => acc + e.tokens_in + e.tokens_out, 0);
+  const totalWasteTokens = findings.reduce((acc, f) => acc + f.waste_tokens, 0);
+  const totalWasteCost = findings.reduce((acc, f) => acc + f.waste_cost, 0);
+
+  const minimapFlaggedRanges: FlaggedRange[] = findings.map((f) => ({
     step_start: f.step_start,
     step_end: f.step_end,
     type: f.type,
     description: f.description,
   }));
+
 
   const highlightedStepRange: [number, number] | null = hoveredFinding
     ? [hoveredFinding.step_start, hoveredFinding.step_end]
@@ -218,15 +294,15 @@ export default function DemoPage() {
       <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
         {/* Top Metric Tiles */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatTile label="Total duration" value="18.4 s" />
-          <StatTile label="Total steps" value={10} />
-          <StatTile label="Total tokens" value="8,412" subtext="in: 5.8k · out: 2.6k" />
-          <StatTile label="Detected loops" value={2} isStuck={true} subtext="Waste: 2.1k tok ($0.03)" />
+          <StatTile label="Total duration" value={liveRun?.duration_ms ? `${(liveRun.duration_ms / 1000).toFixed(1)} s` : "18.4 s"} />
+          <StatTile label="Total steps" value={totalStepsCount} />
+          <StatTile label="Total tokens" value={totalTokensCount.toLocaleString()} />
+          <StatTile label="Detected loops" value={findings.length} isStuck={findings.length > 0} subtext={`Waste: ${totalWasteTokens.toLocaleString()} tok ($${totalWasteCost.toFixed(2)})`} />
         </div>
 
         {/* Loop Minimap Full Width */}
         <LoopMinimap
-          totalSteps={10}
+          totalSteps={totalStepsCount}
           flaggedRanges={minimapFlaggedRanges}
           selectedStep={selectedStep}
           onStepClick={(step) => setSelectedStep(step)}
@@ -240,12 +316,12 @@ export default function DemoPage() {
               <h3 className="font-sans font-semibold text-sm text-text">
                 Execution Timeline
               </h3>
-              <span className="text-xs font-mono text-faint">10 steps total</span>
+              <span className="text-xs font-mono text-faint">{totalStepsCount} steps total</span>
             </div>
 
             <TimelineList
-              events={mockEvents}
-              findings={mockFindings.map((f) => ({
+              events={events}
+              findings={findings.map((f) => ({
                 finding_type: f.type,
                 step_start: f.step_start,
                 step_end: f.step_end,
@@ -263,12 +339,12 @@ export default function DemoPage() {
                 Detected Findings
               </h3>
               <span className="text-xs font-mono text-stuck font-medium">
-                {mockFindings.length} issues
+                {findings.length} issues
               </span>
             </div>
 
             <div className="space-y-4">
-              {mockFindings.map((finding) => (
+              {findings.map((finding) => (
                 <FindingCard
                   key={finding.id}
                   finding={finding}
@@ -291,9 +367,10 @@ export default function DemoPage() {
       {/* Guard Simulation Modal */}
       <GuardSimulationModal
         finding={simulationFinding}
-        totalSteps={10}
+        totalSteps={totalStepsCount}
         onClose={() => setSimulationFinding(null)}
       />
     </div>
   );
 }
+
