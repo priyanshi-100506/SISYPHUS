@@ -58,7 +58,7 @@ export const GuardSimulationModal: React.FC<GuardSimulationProps> = ({
                   width: `${((finding.step_end - finding.step_start + 1) / totalSteps) * 100}%`,
                 }}
               >
-                oxblood loop stroke
+                Repeated loop
               </div>
             </div>
           </div>
