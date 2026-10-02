@@ -31,7 +31,7 @@ export const FindingCard: React.FC<FindingCardProps> = ({
   onSimulateGuard,
   onHover,
 }) => {
-  const [showAiExplanation, setShowAiExplanation] = useState(false);
+  const [showAiExplanation, setShowAiExplanation] = useState(true);
 
   const isLoop = finding.type.includes("LOOP") || finding.type.includes("REPEATED");
   const leftBorderColor = isLoop ? "border-stuck" : "border-warn";
@@ -95,22 +95,24 @@ export const FindingCard: React.FC<FindingCardProps> = ({
         {buildDeterministicSummary(finding)}
       </p>
 
-      {/* AI Explanation Collapsible - Section 12 Label: "Explanation, written by an AI from the evidence above" */}
+      {/* AI Explanation Callout */}
       {finding.explanation && (
         <div className="pt-1">
           <button
             onClick={() => setShowAiExplanation(!showAiExplanation)}
-            className="flex items-center gap-1.5 text-xs text-muted hover:text-text focus:outline-none"
+            className="flex items-center gap-1.5 text-xs font-medium text-accent hover:underline focus:outline-none mb-1.5"
           >
-            <span>Explanation, written by an AI from the evidence above</span>
+            <span className="flex items-center gap-1">
+              ✨ Explanation (by Gemini AI)
+            </span>
             {showAiExplanation ? (
-              <ChevronUp className="w-3 h-3 text-faint" />
+              <ChevronUp className="w-3 h-3 text-accent" />
             ) : (
-              <ChevronDown className="w-3 h-3 text-faint" />
+              <ChevronDown className="w-3 h-3 text-accent" />
             )}
           </button>
           {showAiExplanation && (
-            <div className="mt-2 p-3 bg-accent-bg/80 border border-accent/20 rounded text-xs text-text font-sans leading-relaxed">
+            <div className="p-3 bg-surface-2 border border-accent/30 rounded-lg text-xs text-text font-sans leading-relaxed shadow-sm">
               {finding.explanation}
             </div>
           )}
