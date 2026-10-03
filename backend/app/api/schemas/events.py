@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, ConfigDict
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Any, List
 
 class EventIn(BaseModel):
@@ -15,7 +15,7 @@ class EventIn(BaseModel):
     tokens_in: int = 0
     tokens_out: int = 0
     latency_ms: Optional[int] = None
-    timestamp: datetime
+    timestamp: Optional[datetime] = Field(default_factory=lambda: datetime.now(timezone.utc))
     state_hash: Optional[str] = None
     parent_id: Optional[UUID] = None
 

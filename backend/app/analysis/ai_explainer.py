@@ -4,9 +4,47 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
+def _safe_extract_text(response) -> str | None:
+    """
+    Safely extract text from a Gemini GenerateContentResponse.
+    Returns None if the response is empty, blocked, or has no usable parts.
+    """
+    try:
+        candidates = getattr(response, "candidates", None)
+        if not candidates:
+            logger.warning("Gemini returned no candidates.")
+            return None
+
+        candidate = candidates[0]
+
+        # Check finish_reason — STOP(1) is the only fully-successful outcome
+        finish_reason = getattr(candidate, "finish_reason", None)
+        # finish_reason == 1 means STOP (normal completion)
+        if finish_reason is not None and finish_reason != 1:
+            logger.warning(f"Gemini candidate finish_reason={finish_reason} (not STOP). Skipping.")
+            return None
+
+        content = getattr(candidate, "content", None)
+        if content is None:
+            return None
+
+        parts = getattr(content, "parts", None)
+        if not parts:
+            return None
+
+        text_parts = [p.text for p in parts if hasattr(p, "text") and p.text]
+        if not text_parts:
+            return None
+
+        return "".join(text_parts).strip() or None
+    except Exception as exc:
+        logger.warning(f"Failed to extract text from Gemini response: {exc}")
+        return None
+
+
 async def generate_explanation(finding_type: str, evidence: Dict[str, Any]) -> str:
     """
-    Generates a 1-3 sentence plain-English explanation for a finding using evidence.
+    Generates a 1-2 sentence plain-English explanation for a finding using evidence.
     Uses Gemini API if GEMINI_API_KEY is set, otherwise falls back to template-based explanations.
     """
     if settings.GEMINI_API_KEY:
@@ -19,10 +57,17 @@ async def generate_explanation(finding_type: str, evidence: Dict[str, Any]) -> s
                 f"Finding Type: {finding_type}\n"
                 f"Evidence: {evidence}\n\n"
                 f"Provide a concise 1-2 sentence plain English explanation of why this happened "
-                f"and what waste it caused. Be specific about the tool names and counts from the evidence."
+                f"and what waste it caused. Be specific about the tool names and counts from the evidence. "
+                f"Do not use markdown, bullet points, or headers — plain prose only."
             )
-            response = model.generate_content(prompt)
-            return response.text.strip()
+            response = model.generate_content(
+                prompt,
+                generation_config={"max_output_tokens": 200, "temperature": 0.3},
+            )
+            text = _safe_extract_text(response)
+            if text:
+                return text
+            logger.warning("Gemini returned an empty/blocked response. Falling back to template.")
         except Exception as e:
             logger.warning(f"Gemini API call failed: {e}. Falling back to deterministic explanation template.")
 
