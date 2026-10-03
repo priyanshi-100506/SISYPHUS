@@ -1,6 +1,18 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
+
+const FINDING_COLORS: Record<string, { fill: string; border: string; label: string }> = {
+  REPEATED_TOOL:    { fill: "rgba(198,90,116,0.22)",  border: "#C65A74", label: "Repeated Tool" },
+  STATE_LOOP:       { fill: "rgba(240,115,124,0.18)", border: "#F0737C", label: "State Loop" },
+  RETRY_STORM:      { fill: "rgba(227,178,92,0.20)",  border: "#E3B25C", label: "Retry Storm" },
+  EXECUTION_BLOAT:  { fill: "rgba(143,163,201,0.18)", border: "#8FA3C9", label: "Execution Bloat" },
+  TOOL_OSCILLATION: { fill: "rgba(198,90,116,0.15)",  border: "#C65A74", label: "Oscillation" },
+};
+
+function getColor(type: string) {
+  return FINDING_COLORS[type] ?? { fill: "rgba(198,90,116,0.18)", border: "#C65A74", label: type.replace(/_/g, " ") };
+}
 
 export interface FlaggedRange {
   step_start: number;
@@ -26,185 +38,217 @@ export const LoopMinimap: React.FC<LoopMinimapProps> = ({
   onStepClick,
   onRangeHover,
 }) => {
-  const [tooltip, setTooltip] = useState<{
-    text: string;
-    x: number;
-    y: number;
-  } | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [tooltip, setTooltip] = useState<{ text: string; x: number; y: number } | null>(null);
 
   if (totalSteps <= 0) return null;
 
-  const width = 800;
-  const height = 48;
-  const tickGap = width / Math.max(totalSteps, 1);
+  const TRACK_H = 36;
+  const BAR_H = 11;
+  const BAR_Y = (TRACK_H - BAR_H) / 2;
 
-  const getFlaggedRange = (step: number): FlaggedRange | undefined => {
-    return flaggedRanges.find(
-      (r) => step >= r.step_start && step <= r.step_end
-    );
-  };
+  const getFlaggedRange = (step: number) =>
+    flaggedRanges.find((r) => step >= r.step_start && step <= r.step_end);
+
+  const isFlaggedStep = (step: number) => Boolean(getFlaggedRange(step));
 
   return (
-    <div className="w-full bg-surface border border-border-soft rounded-tile p-3.5 shadow-xl relative overflow-hidden select-none">
-      <div className="flex items-center justify-between text-xs text-muted mb-2 font-mono">
+    <div
+      ref={containerRef}
+      className="w-full bg-surface border border-border-soft rounded-tile select-none"
+      style={{ padding: "14px 16px 12px" }}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-accent animate-pulse-slow" />
-          <span className="text-[11px] uppercase font-sans tracking-wider text-faint font-medium">
-            Execution Minimap & Loop Bounds
+          <span
+            className="w-1.5 h-1.5 rounded-full animate-pulse-slow"
+            style={{ background: "var(--stuck)" }}
+          />
+          <span
+            className="uppercase font-sans font-medium tracking-widest"
+            style={{ fontSize: 10, color: "var(--text-faint)", letterSpacing: "0.09em" }}
+          >
+            Execution Minimap &amp; Loop Bounds
           </span>
         </div>
-        <span className="text-faint font-tabular">
-          {totalSteps} steps total {flaggedRanges.length > 0 && `· ${flaggedRanges.length} loop issue(s)`}
+        <span className="font-mono" style={{ fontSize: 11, color: "var(--text-faint)" }}>
+          {totalSteps} steps total
+          {flaggedRanges.length > 0 && (
+            <span style={{ color: "var(--stuck)", marginLeft: 6, fontWeight: 500 }}>
+              &middot; {flaggedRanges.length} loop issue{flaggedRanges.length !== 1 ? "s" : ""}
+            </span>
+          )}
         </span>
       </div>
 
-      <div className="relative w-full h-[40px] bg-surface-2/90 rounded border border-border-soft/60 overflow-hidden">
+      {/* Track */}
+      <div
+        ref={null}
+        className="relative w-full rounded overflow-hidden"
+        style={{
+          height: TRACK_H,
+          background: "var(--surface-2)",
+          border: "1px solid var(--border-soft)",
+        }}
+      >
         <svg
-          viewBox={`0 0 ${width} ${height}`}
-          className="w-full h-full cursor-pointer overflow-visible"
+          viewBox={`0 0 1000 ${TRACK_H}`}
+          className="w-full h-full"
           preserveAspectRatio="none"
+          style={{ display: "block" }}
         >
-          <defs>
-            <linearGradient id="gloss-overlay" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.25" />
-              <stop offset="50%" stopColor="#FFFFFF" stopOpacity="0" />
-            </linearGradient>
-
-            <linearGradient id="stuck-impasto-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#630D20" />
-              <stop offset="50%" stopColor="#A81B38" />
-              <stop offset="100%" stopColor="#E05670" />
-            </linearGradient>
-
-            <filter id="stuck-glow" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="3" result="blur" />
-              <feComposite in="SourceGraphic" in2="blur" operator="over" />
-            </filter>
-          </defs>
-
-          {/* Background Step Ticks */}
+          {/* Clean step segments */}
           {Array.from({ length: totalSteps }).map((_, i) => {
             const stepNum = i + 1;
-            const x = i * tickGap;
-            const isFlagged = Boolean(getFlaggedRange(stepNum));
-            const isHovered = hoveredStep === stepNum;
+            const x = (i / totalSteps) * 1000;
+            const w = Math.max((1000 / totalSteps) - 1.5, 1);
+            const flagged = isFlaggedStep(stepNum);
             const isSelected = selectedStep === stepNum;
+            const isHov = hoveredStep === stepNum;
 
-            if (isFlagged) return null;
-
-            return (
-              <g key={`step-tick-${stepNum}`}>
-                <line
-                  x1={x + tickGap / 2}
-                  y1={8}
-                  x2={x + tickGap / 2}
-                  y2={height - 8}
-                  stroke={
-                    isSelected
-                      ? "var(--accent-light)"
-                      : isHovered
-                      ? "var(--accent)"
-                      : "var(--accent-deep)"
-                  }
-                  strokeWidth={Math.max(2, tickGap * 0.45)}
-                  opacity={isHovered || isSelected ? 1 : 0.65}
-                />
-              </g>
-            );
-          })}
-
-          {/* Flagged Ranges with 20-degree Slanted Diagonal Boundary */}
-          {flaggedRanges.map((range, index) => {
-            const startIdx = Math.max(0, range.step_start - 1);
-            const endIdx = Math.min(totalSteps - 1, range.step_end - 1);
-
-            const startX = startIdx * tickGap;
-            const endX = (endIdx + 1) * tickGap;
-            const diagOffset = Math.min(14, tickGap * 1.5); // ~20 deg slant
-
-            const pathD = `
-              M ${startX + diagOffset} 0
-              L ${endX} 0
-              L ${endX - diagOffset} ${height}
-              L ${startX} ${height}
-              Z
-            `;
-
-            return (
-              <g
-                key={`range-${index}`}
-                className="transition-all duration-150 hover:brightness-110"
-                filter="url(#stuck-glow)"
-                onMouseEnter={(e) => {
-                  onRangeHover?.(range);
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  setTooltip({
-                    text: `${range.type}: ${range.description} (Steps ${range.step_start}-${range.step_end})`,
-                    x: rect.left + rect.width / 2,
-                    y: rect.top - 40,
-                  });
-                }}
-                onMouseLeave={() => {
-                  onRangeHover?.(null);
-                  setTooltip(null);
-                }}
-                onClick={() => onStepClick?.(range.step_start)}
-              >
-                {/* Thick Oxblood Impasto Fill */}
-                <path d={pathD} fill="url(#stuck-impasto-gradient)" />
-                {/* Gloss Overlay */}
-                <path d={pathD} fill="url(#gloss-overlay)" />
-                {/* Oxblood Gloss Top Catchlight Stroke */}
-                <path
-                  d={`M ${startX + diagOffset} 0 L ${endX} 0`}
-                  stroke="var(--stuck)"
-                  strokeWidth="3"
-                />
-              </g>
-            );
-          })}
-
-          {/* Click / Hover Target overlay */}
-          {Array.from({ length: totalSteps }).map((_, i) => {
-            const stepNum = i + 1;
-            const x = i * tickGap;
-            const range = getFlaggedRange(stepNum);
+            if (flagged) return null;
 
             return (
               <rect
-                key={`target-${stepNum}`}
-                x={x}
-                y={0}
-                width={tickGap}
-                height={height}
-                fill="transparent"
+                key={stepNum}
+                x={x + 0.75}
+                y={BAR_Y}
+                width={w}
+                height={BAR_H}
+                rx={2}
+                fill={
+                  isSelected
+                    ? "var(--accent-light)"
+                    : isHov
+                    ? "var(--accent)"
+                    : "var(--accent-deep)"
+                }
+                opacity={isSelected || isHov ? 1 : 0.5}
+                style={{ cursor: "pointer" }}
                 onClick={() => onStepClick?.(stepNum)}
-                onMouseEnter={(e) => {
-                  if (range) onRangeHover?.(range);
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  setTooltip({
-                    text: range
-                      ? `Step ${stepNum} [${range.type}]: ${range.description}`
-                      : `Step ${stepNum}`,
-                    x: rect.left + rect.width / 2,
-                    y: rect.top - 32,
-                  });
+                onMouseEnter={() => {
+                  const rect = containerRef.current?.getBoundingClientRect();
+                  if (rect) {
+                    const svgX = ((i + 0.5) / totalSteps) * rect.width + rect.left;
+                    setTooltip({ text: `Step ${stepNum}`, x: svgX, y: rect.top - 36 });
+                  }
                 }}
-                onMouseLeave={() => {
-                  if (range) onRangeHover?.(null);
-                  setTooltip(null);
-                }}
+                onMouseLeave={() => setTooltip(null)}
               />
             );
           })}
+
+          {/* Flagged range blocks — rendered on top of clean steps */}
+          {flaggedRanges.map((range, idx) => {
+            const color = getColor(range.type);
+            const startFrac = (range.step_start - 1) / totalSteps;
+            const endFrac = range.step_end / totalSteps;
+            const x = startFrac * 1000;
+            const w = Math.max((endFrac - startFrac) * 1000, 4);
+
+            return (
+              <g key={idx}>
+                {/* Soft zone wash */}
+                <rect x={x} y={0} width={w} height={TRACK_H} fill={color.fill} />
+                {/* Solid bar */}
+                <rect
+                  x={x + 0.75}
+                  y={BAR_Y}
+                  width={Math.max(w - 1.5, 1)}
+                  height={BAR_H}
+                  rx={2}
+                  fill={color.border}
+                  opacity={0.88}
+                  style={{ cursor: "pointer" }}
+                  onClick={() => onStepClick?.(range.step_start)}
+                  onMouseEnter={() => {
+                    onRangeHover?.(range);
+                    const rect = containerRef.current?.getBoundingClientRect();
+                    if (rect) {
+                      const midFrac = (startFrac + endFrac) / 2;
+                      setTooltip({
+                        text: `${color.label} · steps ${range.step_start}–${range.step_end}`,
+                        x: midFrac * rect.width + rect.left,
+                        y: rect.top - 36,
+                      });
+                    }
+                  }}
+                  onMouseLeave={() => { onRangeHover?.(null); setTooltip(null); }}
+                />
+                {/* Top accent line */}
+                <rect x={x} y={BAR_Y} width={w} height={1.5} fill={color.border} opacity={1} />
+              </g>
+            );
+          })}
+
+          {/* Selected step overlay */}
+          {selectedStep && selectedStep >= 1 && selectedStep <= totalSteps && (
+            <rect
+              x={((selectedStep - 1) / totalSteps) * 1000}
+              y={0}
+              width={1000 / totalSteps}
+              height={TRACK_H}
+              fill="var(--accent)"
+              opacity={0.18}
+              style={{ pointerEvents: "none" }}
+            />
+          )}
         </svg>
+
+        {/* Step number axis labels */}
+        <div
+          className="absolute inset-x-0 flex justify-between pointer-events-none"
+          style={{ bottom: 2, padding: "0 4px" }}
+        >
+          <span className="font-mono" style={{ fontSize: 9, color: "var(--text-faint)" }}>1</span>
+          {totalSteps > 4 && (
+            <span className="font-mono" style={{ fontSize: 9, color: "var(--text-faint)" }}>
+              {Math.ceil(totalSteps / 2)}
+            </span>
+          )}
+          <span className="font-mono" style={{ fontSize: 9, color: "var(--text-faint)" }}>{totalSteps}</span>
+        </div>
       </div>
 
-      {/* Floating Tooltip */}
+      {/* Legend */}
+      {flaggedRanges.length > 0 && (
+        <div className="flex items-center gap-5 mt-2.5 flex-wrap">
+          {flaggedRanges.map((r, i) => {
+            const color = getColor(r.type);
+            return (
+              <div key={i} className="flex items-center gap-1.5">
+                <span
+                  className="inline-block rounded-sm"
+                  style={{ width: 10, height: 10, background: color.border, opacity: 0.9 }}
+                />
+                <span className="font-mono" style={{ fontSize: 10, color: "var(--text-faint)" }}>
+                  {color.label}&nbsp;<span style={{ color: "var(--text-muted)" }}>steps {r.step_start}–{r.step_end}</span>
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Tooltip */}
       {tooltip && (
         <div
-          className="fixed z-50 px-3 py-1.5 text-xs font-sans bg-surface-3 text-text border border-border rounded-md shadow-2xl pointer-events-none transform -translate-x-1/2 whitespace-nowrap box-ridge"
-          style={{ left: `${tooltip.x}px`, top: `${tooltip.y}px` }}
+          className="fixed z-50 pointer-events-none"
+          style={{
+            left: tooltip.x,
+            top: tooltip.y,
+            transform: "translateX(-50%)",
+            background: "var(--surface-3, #2C1A22)",
+            border: "1px solid var(--border)",
+            borderRadius: 6,
+            padding: "4px 10px",
+            fontSize: 11,
+            color: "var(--text)",
+            whiteSpace: "nowrap",
+            boxShadow: "0 4px 20px rgba(0,0,0,0.55)",
+            fontFamily: "var(--font-geist-mono), monospace",
+          }}
         >
           {tooltip.text}
         </div>
