@@ -273,19 +273,27 @@ export default function DemoPage() {
             </Link>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-mono text-xs text-faint">RUN #8F30</span>
-                <StatusBadge status="loop" />
+                <span className="font-mono text-xs text-faint">
+                  {liveRun ? `RUN #${String(liveRun.id).substring(0, 6).toUpperCase()}` : "RUN #8F30"}
+                </span>
+                <StatusBadge status={liveRun?.status || (findings.length > 0 ? "loop" : "completed")} />
               </div>
               <h1 className="font-display text-xl font-medium text-text mt-0.5">
-                "Find three hotels in Paris with available rooms"
+                {liveRun?.input ? `"${liveRun.input}"` : '"Find three hotels in Paris with available rooms"'}
               </h1>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            <span className="px-2.5 py-1 rounded bg-stuck-bg text-stuck text-xs font-mono border border-stuck/20">
-              Demo Mode (Read-Only)
-            </span>
+            {liveRun ? (
+              <span className="px-2.5 py-1 rounded bg-ok-bg text-ok text-xs font-mono border border-ok/20">
+                Live Trace
+              </span>
+            ) : (
+              <span className="px-2.5 py-1 rounded bg-stuck-bg text-stuck text-xs font-mono border border-stuck/20">
+                Demo Mode (Read-Only)
+              </span>
+            )}
           </div>
         </div>
       </header>
