@@ -110,6 +110,34 @@ export const GuardSimulationModal: React.FC<GuardSimulationProps> = ({
           </div>
         </div>
 
+        {/* Remediation Snippet */}
+        <div className="bg-surface-2 border border-border-soft rounded-tile p-3.5 space-y-2">
+          <div className="flex items-center justify-between text-xs font-mono">
+            <span className="text-text-muted font-sans font-medium">Active Guard Configuration</span>
+            <button
+              onClick={() => {
+                const code = `# Add Sisyphus Guard to prevent ${finding.type}
+from sisyphus import SisyphusGuard
+
+guard = SisyphusGuard(
+    break_on=["${finding.type}"],
+    max_identical_calls=3,
+    action="terminate"
+)`;
+                if (typeof navigator !== "undefined") {
+                  navigator.clipboard.writeText(code);
+                }
+              }}
+              className="px-2.5 py-1 bg-surface border border-border rounded text-[11px] text-accent hover:text-accent-light hover:border-accent transition-colors"
+            >
+              Copy python snippet
+            </button>
+          </div>
+          <pre className="font-mono text-[11px] text-text-muted bg-surface/80 p-2.5 rounded overflow-x-auto border border-border-soft/60">
+            <code>{`@guard.watch(break_on=["${finding.type}"], max_repeats=3)\nasync def execute_step(step):\n    ...`}</code>
+          </pre>
+        </div>
+
         <p className="text-xs text-faint font-sans italic text-center">
           Simulated from the recorded trace. Your agent is not re-run.
         </p>

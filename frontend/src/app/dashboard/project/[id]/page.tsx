@@ -24,9 +24,15 @@ export default function ProjectDashboardPage() {
     setLoading(true);
     try {
       if (projectId && projectId !== "demo") {
+        let storedKey: string | undefined = undefined;
+        if (typeof window !== "undefined") {
+          try {
+            storedKey = localStorage.getItem(`sisyphus_key_${projectId}`) || undefined;
+          } catch (_) {}
+        }
         const [projData, runsData] = await Promise.all([
           fetchProject(projectId),
-          fetchProjectRuns(projectId),
+          fetchProjectRuns(projectId, storedKey),
         ]);
         setProject(projData);
         setRuns(runsData);

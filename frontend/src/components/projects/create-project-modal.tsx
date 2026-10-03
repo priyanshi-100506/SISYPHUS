@@ -41,17 +41,29 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
         slug: slug || name.toLowerCase().replace(/[^a-z0-9]/g, "-"),
         language,
       });
+      const key = data.api_key || `sk_live_${Math.random().toString(36).substring(2, 18)}`;
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem(`sisyphus_key_${data.id}`, key);
+        } catch (_) {}
+      }
       setCreatedData({
         id: data.id,
-        api_key: data.api_key || `sk_live_${Math.random().toString(36).substring(2, 18)}`,
+        api_key: key,
       });
       onSuccess?.();
     } catch (err: any) {
       console.error("Create project error:", err);
       // Clean fallback if backend is offline or needs auth
       const mockKey = `sk_live_${Math.random().toString(36).substring(2, 18)}`;
+      const mockId = "proj_" + Math.random().toString(36).substring(2, 8);
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem(`sisyphus_key_${mockId}`, mockKey);
+        } catch (_) {}
+      }
       setCreatedData({
-        id: "proj_" + Math.random().toString(36).substring(2, 8),
+        id: mockId,
         api_key: mockKey,
       });
       onSuccess?.();
