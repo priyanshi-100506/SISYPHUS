@@ -168,18 +168,18 @@ sisyphus/
 
 ---
 
-## What is NOT built yet
+---
 
-| Phase | Status |
-|-------|--------|
-| 0 Skeleton + 1 Ingestion | ✅ This branch |
-| 2 Dashboard + OAuth | 🔜 Next |
-| 3 Detection engine | 🔜 |
-| 4 Findings UI | 🔜 |
-| 5 AI explanations | 🔜 |
-| 6 Metrics + guard simulation | 🔜 |
+## What is built (SISYPHUS v1.0)
 
-> **Phase 2 auth note:** `POST /projects` currently uses a dev-only stub (pass `X-Dev-Mode: true`). Real GitHub OAuth lands in Phase 2. Do not expose the dev stub to the internet.
+| Component | Status | Description |
+|-----------|--------|-------------|
+| Ingestion Engine | ✅ Complete | Idempotent batch event ingestion (`UNIQUE(run_id, sequence_number)`) |
+| Detection Engine | ✅ Complete | Deterministic algorithms: `REPEATED_TOOL`, `STATE_LOOP`, `RETRY_STORM`, `EXECUTION_BLOAT`, `TOOL_OSCILLATION` |
+| AI Explainer | ✅ Complete | Google Gemini 2.5 Flash via `google-genai` SDK with deterministic fallback summaries |
+| Findings & Metrics API | ✅ Complete | Computed waste calculations (tokens, latency, cost) and summary endpoints |
+| Interactive Dashboard & UI | ✅ Complete | Run timeline, loop minimap, finding cards, evidence drawer, guard simulation modal |
+| Verification & Test Suite | ✅ Complete | 13/13 passing async tests (`pytest`) + end-to-end integration script |
 
 ---
 
@@ -187,9 +187,10 @@ sisyphus/
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `DATABASE_URL` | Yes | — | asyncpg Postgres URL |
+| `DATABASE_URL` | Yes | `sqlite+aiosqlite:///./test.db` | Database connection URL (PostgreSQL in prod, SQLite for dev/test) |
 | `FRONTEND_ORIGIN` | Yes | `http://localhost:3000` | CORS allowed origin |
-| `SECRET_KEY` | Yes | — | Random 64-char hex string |
-| `TEST_DATABASE_URL` | Tests | — | Separate test database |
+| `SECRET_KEY` | Yes | `change-me-in-production` | Secret key for auth / API key hashing |
+| `GEMINI_API_KEY` | Optional | — | Google Gemini API key for AI root-cause explanations (graceful fallback if unset) |
+| `NEXT_PUBLIC_API_URL` | Optional | `http://localhost:8000/api/v1` | Backend API base URL for frontend client |
 
 Copy `.env.example` → `.env` and fill in values.

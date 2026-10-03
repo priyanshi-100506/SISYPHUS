@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ArrowLeft, RefreshCw, AlertTriangle } from "lucide-react";
@@ -14,7 +14,7 @@ import { GuardSimulationModal } from "@/components/simulation/guard-simulation";
 import { Button } from "@/components/ui/button";
 import { fetchRunEvents, fetchRunFindings, fetchRunDetail, EventDataApi, FindingDataApi } from "@/lib/api";
 
-export default function DemoPage() {
+function DemoContent() {
   const searchParams = useSearchParams();
   const runId = searchParams?.get("run_id");
 
@@ -379,6 +379,20 @@ export default function DemoPage() {
         onClose={() => setSimulationFinding(null)}
       />
     </div>
+  );
+}
+
+export default function DemoPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-bg flex items-center justify-center text-muted font-mono text-sm">
+          Loading trace...
+        </div>
+      }
+    >
+      <DemoContent />
+    </Suspense>
   );
 }
 

@@ -1,7 +1,7 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
 from uuid import UUID
 from datetime import datetime
-from typing import Optional
+from typing import Literal, Optional
 from decimal import Decimal
 
 class RunCreate(BaseModel):
@@ -22,8 +22,17 @@ class RunOut(BaseModel):
     estimated_cost: Decimal
     analyzed_at: Optional[datetime] = None
 
+VALID_TERMINAL_STATUSES = {"completed", "failed", "terminated", "timeout"}
+
 class CompleteRunIn(BaseModel):
     status: str = "completed"
+
+    @field_validator("status")
+    @classmethod
+    def validate_status(cls, v: str) -> str:
+        if v not in VALID_TERMINAL_STATUSES:
+            raise ValueError(f"status must be one of: {', '.join(sorted(VALID_TERMINAL_STATUSES))}")
+        return v
 
 class RunMetricsOut(BaseModel):
     total_steps: int

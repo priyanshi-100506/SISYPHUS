@@ -120,7 +120,8 @@ export async function fetchProjectRuns(
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    return data.items || data;
+    // API returns a direct JSON array for project runs
+    return Array.isArray(data) ? data : (data.items || []);
   } catch (e) {
     console.warn("Backend API unavailable, using demo runs:", e);
     return [
@@ -182,7 +183,8 @@ export async function fetchRunEvents(
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    return data.items || data;
+    // PaginatedEventsOut shape: { events: [...], next_cursor: ... }
+    return Array.isArray(data) ? data : (data.events || data.items || []);
   } catch (e) {
     console.warn("Backend API fetchRunEvents failed, using fallback:", e);
     return [];

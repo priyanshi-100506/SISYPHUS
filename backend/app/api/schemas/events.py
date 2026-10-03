@@ -1,11 +1,20 @@
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 from uuid import UUID
 from datetime import datetime, timezone
 from typing import Optional, Any, List
 
+VALID_EVENT_TYPES = {"think", "tool", "error", "end"}
+
 class EventIn(BaseModel):
     sequence_number: int
     event_type: str  # think | tool | error | end
+
+    @field_validator("event_type")
+    @classmethod
+    def validate_event_type(cls, v: str) -> str:
+        if v not in VALID_EVENT_TYPES:
+            raise ValueError(f"event_type must be one of: {', '.join(sorted(VALID_EVENT_TYPES))}")
+        return v
     tool_name: Optional[str] = None
     model: Optional[str] = None
     input: Optional[Any] = None

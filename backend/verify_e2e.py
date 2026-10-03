@@ -45,7 +45,7 @@ async def test_end_to_end():
         print(f"Events batch ingest status: {batch_resp.status_code}, data: {batch_resp.json()}")
 
         # 4. Complete the run -> triggers analysis engine
-        complete_resp = await client.post(f"{API_BASE}/runs/{run_id}/complete", headers=headers, json={"status": "loop"})
+        complete_resp = await client.post(f"{API_BASE}/runs/{run_id}/complete", headers=headers, json={"status": "completed"})
         print(f"Run completion status: {complete_resp.status_code}, data: {complete_resp.json()}")
 
         # 5. Retrieve findings

@@ -4,23 +4,27 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
+
 def _safe_extract_text(response) -> str | None:
     """
-    Safely extract text from a Gemini GenerateContentResponse.
+    Safely extract text from a Gemini GenerateContentResponse (google-genai SDK).
     Returns None if the response is empty, blocked, or has no usable parts.
     """
     try:
+        text = getattr(response, "text", None)
+        if text:
+            return text.strip() or None
+
+        # Fallback: walk candidates manually
         candidates = getattr(response, "candidates", None)
         if not candidates:
             logger.warning("Gemini returned no candidates.")
             return None
 
         candidate = candidates[0]
-
-        # Check finish_reason — STOP(1) is the only fully-successful outcome
         finish_reason = getattr(candidate, "finish_reason", None)
-        # finish_reason == 1 means STOP (normal completion)
-        if finish_reason is not None and finish_reason != 1:
+        # FinishReason.STOP == 1 in the proto enum
+        if finish_reason is not None and str(finish_reason) not in ("STOP", "1"):
             logger.warning(f"Gemini candidate finish_reason={finish_reason} (not STOP). Skipping.")
             return None
 
@@ -33,9 +37,6 @@ def _safe_extract_text(response) -> str | None:
             return None
 
         text_parts = [p.text for p in parts if hasattr(p, "text") and p.text]
-        if not text_parts:
-            return None
-
         return "".join(text_parts).strip() or None
     except Exception as exc:
         logger.warning(f"Failed to extract text from Gemini response: {exc}")
@@ -49,9 +50,10 @@ async def generate_explanation(finding_type: str, evidence: Dict[str, Any]) -> s
     """
     if settings.GEMINI_API_KEY:
         try:
-            import google.generativeai as genai
-            genai.configure(api_key=settings.GEMINI_API_KEY)
-            model = genai.GenerativeModel("gemini-2.5-flash")
+            from google import genai
+            from google.genai import types
+
+            client = genai.Client(api_key=settings.GEMINI_API_KEY)
             prompt = (
                 f"You are an AI reliability engineer analyzing an agent execution trace finding.\n"
                 f"Finding Type: {finding_type}\n"
@@ -60,9 +62,13 @@ async def generate_explanation(finding_type: str, evidence: Dict[str, Any]) -> s
                 f"and what waste it caused. Be specific about the tool names and counts from the evidence. "
                 f"Do not use markdown, bullet points, or headers — plain prose only."
             )
-            response = model.generate_content(
-                prompt,
-                generation_config={"max_output_tokens": 200, "temperature": 0.3},
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    max_output_tokens=200,
+                    temperature=0.3,
+                ),
             )
             text = _safe_extract_text(response)
             if text:
