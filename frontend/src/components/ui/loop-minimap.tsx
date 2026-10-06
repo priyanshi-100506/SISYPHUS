@@ -69,14 +69,14 @@ export const LoopMinimap: React.FC<LoopMinimapProps> = ({
             className="uppercase font-sans font-medium tracking-widest"
             style={{ fontSize: 10, color: "var(--text-faint)", letterSpacing: "0.09em" }}
           >
-            Execution Minimap &amp; Loop Bounds
+            Execution Minimap & Loop Bounds
           </span>
         </div>
         <span className="font-mono" style={{ fontSize: 11, color: "var(--text-faint)" }}>
           {totalSteps} steps total
           {flaggedRanges.length > 0 && (
             <span style={{ color: "var(--stuck)", marginLeft: 6, fontWeight: 500 }}>
-              &middot; {flaggedRanges.length} loop issue{flaggedRanges.length !== 1 ? "s" : ""}
+              · {flaggedRanges.length} loop issue{flaggedRanges.length !== 1 ? "s" : ""}
             </span>
           )}
         </span>

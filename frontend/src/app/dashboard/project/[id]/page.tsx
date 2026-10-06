@@ -17,11 +17,13 @@ export default function ProjectDashboardPage() {
   const [project, setProject] = useState<ProjectData | null>(null);
   const [runs, setRuns] = useState<RunData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [filter, setFilter] = useState<"all" | "loops" | "failed">("all");
 
   const loadDashboardData = async () => {
     setLoading(true);
+    setError(null);
     try {
       if (projectId && projectId !== "demo") {
         let storedKey: string | undefined = undefined;
@@ -34,11 +36,12 @@ export default function ProjectDashboardPage() {
           fetchProject(projectId),
           fetchProjectRuns(projectId, storedKey),
         ]);
-        setProject(projData);
-        setRuns(runsData);
+        if (projData) setProject(projData);
+        setRuns(runsData || []);
       }
     } catch (err) {
-      console.warn("API fetch error, falling back to mock data:", err);
+      console.warn("API fetch error:", err);
+      setError("Could not reach the backend. Is the API server running?");
     } finally {
       setLoading(false);
     }
@@ -48,54 +51,17 @@ export default function ProjectDashboardPage() {
     loadDashboardData();
   }, [projectId]);
 
-  // Fallback mock runs if backend runs array is empty
-  const defaultRuns = [
-    {
-      id: "run_8f31",
-      status: "completed",
-      total_steps: 12,
-      started_at: new Date(Date.now() - 120000).toISOString(),
-      finished_at: new Date(Date.now() - 115800).toISOString(),
-      total_tokens_in: 2400,
-      total_tokens_out: 1000,
-      estimated_cost: "0.02",
-      input: "Summarize research on quantum computing",
-    },
-    {
-      id: "run_8f30",
-      status: "loop",
-      total_steps: 31,
-      started_at: new Date(Date.now() - 840000).toISOString(),
-      finished_at: new Date(Date.now() - 821600).toISOString(),
-      total_tokens_in: 5800,
-      total_tokens_out: 2600,
-      estimated_cost: "0.08",
-      input: "Find three hotels in Paris with available rooms",
-    },
-    {
-      id: "run_8f29",
-      status: "completed",
-      total_steps: 9,
-      started_at: new Date(Date.now() - 3600000).toISOString(),
-      finished_at: new Date(Date.now() - 3596900).toISOString(),
-      total_tokens_in: 2000,
-      total_tokens_out: 800,
-      estimated_cost: "0.01",
-      input: "Extract entity names from text block",
-    },
-  ];
-
-  const displayRuns = runs.length > 0 ? runs : (defaultRuns as any[]);
+  const displayRuns = runs;
 
   const filteredRuns = displayRuns.filter((r) => {
-    if (filter === "loops") return r.status === "loop";
-    if (filter === "failed") return r.status === "failed" || r.status === "timeout";
+    if (filter === "loops") return r.status === "loop_detected" || r.status === "loop";
+    if (filter === "failed") return r.status === "failed" || r.status === "timeout" || r.status === "terminated";
     return true;
   });
 
   const totalRunsCount = displayRuns.length;
-  const loopCount = displayRuns.filter((r) => r.status === "loop").length;
-  const failedCount = displayRuns.filter((r) => r.status === "failed" || r.status === "timeout").length;
+  const loopCount = displayRuns.filter((r) => r.status === "loop_detected" || r.status === "loop").length;
+  const failedCount = displayRuns.filter((r) => r.status === "failed" || r.status === "timeout" || r.status === "terminated").length;
   const totalTokens = displayRuns.reduce((acc, r) => acc + (r.total_tokens_in || 0) + (r.total_tokens_out || 0), 0);
 
   return (
@@ -174,8 +140,19 @@ export default function ProjectDashboardPage() {
             </div>
           </div>
 
+        {error && (
+          <div className="mb-4 flex items-center gap-2 px-4 py-3 bg-warn-bg border border-warn/20 rounded-tile text-xs font-sans text-warn">
+            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+            {error}
+          </div>
+        )}
+
           <div className="space-y-2">
-            {filteredRuns.map((run) => {
+            {filteredRuns.length === 0 ? (
+              <div className="py-12 text-center text-faint font-mono text-sm">
+                {error ? "No data — backend is unreachable." : filter !== "all" ? "No runs match this filter." : "No runs yet. Send your first trace using the API key."}
+              </div>
+            ) : filteredRuns.map((run) => {
               const runIdStr = typeof run.id === "string" ? run.id : String(run.id);
               const displayId = "#" + runIdStr.substring(0, 6).toUpperCase();
               const tokensTotal = (run.total_tokens_in || 0) + (run.total_tokens_out || 0);

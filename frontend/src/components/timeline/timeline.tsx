@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Wrench, Terminal, AlertOctagon, Copy, Check } from "lucide-react";
+import { Wrench, Terminal, AlertOctagon, Copy, Check, X } from "lucide-react";
 
 export interface EventData {
   id?: string;
@@ -177,7 +177,7 @@ export const TimelineList: React.FC<TimelineListProps> = ({
                   onClick={() => setActiveDrawerEvent(null)}
                   className="p-1 rounded text-muted hover:text-text hover:bg-surface-2"
                 >
-                  ✕
+                  <X className="w-5 h-5" />
                 </button>
               </div>
 

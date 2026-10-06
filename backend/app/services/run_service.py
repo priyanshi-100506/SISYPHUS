@@ -1,7 +1,11 @@
+import asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from fastapi import HTTPException
 from datetime import datetime, timezone
+import logging
+
+logger = logging.getLogger(__name__)
 
 from app.db.models import Run, Project, Event, Finding
 from app.api.schemas.runs import RunCreate, RunOut, CompleteRunIn, RunMetricsOut
@@ -81,12 +85,19 @@ async def complete_run(db: AsyncSession, project: Project, run_id, data: Complet
     run.total_steps = stats.total_steps
     run.total_tokens_in = stats.total_tokens_in
     run.total_tokens_out = stats.total_tokens_out
+    # Calculate estimated cost using default rates ($3/M in, $15/M out)
+    cost = (stats.total_tokens_in / 1_000_000.0 * 3.00) + (stats.total_tokens_out / 1_000_000.0 * 15.00)
+    run.estimated_cost = round(cost, 6)
 
     await db.commit()
     await db.refresh(run)
 
-    # Trigger analysis
-    await analysis_engine.analyze(run.id, db)
+    # Trigger analysis synchronously with error protection so failure doesn't fail completion
+    try:
+        await analysis_engine.analyze(run.id, db)
+        await db.refresh(run)
+    except Exception as exc:
+        logger.error(f"Analysis failed for run_id={run.id}: {exc}")
 
     return RunOut.model_validate(run)
 

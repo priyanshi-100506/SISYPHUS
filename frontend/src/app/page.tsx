@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { CreateProjectModal } from "@/components/projects/create-project-modal";
 
 /* ─── data constants (mirrors the HTML prototype exactly) ─── */
 const N: Record<string, string> = { t: "think", s: "search", r: "read_url", f: "summarize", e: "end" };
@@ -189,6 +190,7 @@ function buildTimeline(): string {
 /* ─── Component ─── */
 export default function Home() {
   const initialized = useRef(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const route = useCallback(() => {
     const v = location.hash.slice(1);
@@ -328,7 +330,7 @@ export default function Home() {
     <>
       <header className="top">
         <a className="wm" href="#landing">SISYPHUS</a>
-        <nav aria-label="Prototype views">
+        <nav aria-label="Main navigation">
           <button data-go="landing">Landing</button>
           <button data-go="dashboard">Dashboard</button>
           <button data-go="run">Run 8F30</button>
@@ -346,7 +348,13 @@ export default function Home() {
               <p>Send your agent's tool calls to SISYPHUS. It shows which calls repeated, which retries failed, and what they cost.</p>
               <div className="btns">
                 <button className="btn p" data-go="run">Try the demo</button>
-                <button className="btn" data-go="dashboard">Create a project</button>
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={() => setIsCreateModalOpen(true)}
+                >
+                  Create a project
+                </button>
               </div>
             </div>
             <div className="panel">
@@ -394,6 +402,13 @@ export default function Home() {
               <h1 className="d" style={{ font: "500 32px/1.15 Fraunces,Georgia,serif" }}>Research Agent</h1>
               <p className="m">proj_8af21, last 14 days</p>
             </div>
+            <button
+              type="button"
+              className="btn p"
+              onClick={() => setIsCreateModalOpen(true)}
+            >
+              + New Project
+            </button>
           </div>
           <div className="tiles">
             <div className="tile"><span>Runs</span><b>143</b></div>
@@ -417,7 +432,7 @@ export default function Home() {
             <button className="chipb" data-f="fail" aria-pressed="false">Failed</button>
           </div>
           <div className="ow"><div className="rl" id="rl"></div></div>
-          <p className="m" style={{ marginTop: 10 }}>The demo opens run 8F30.</p>
+          <p className="m" style={{ marginTop: 10 }}>Click a run to inspect its trace.</p>
         </section>
 
         {/* ── Run ── */}
@@ -452,7 +467,12 @@ export default function Home() {
         </section>
       </main>
 
-      <footer>Prototype with demo data. Run 8F30 is a recorded example.</footer>
+      <footer>Run 8F30 is a recorded example trace. <a href="#landing" style={{color: "var(--accent)"}}>See how it works →</a></footer>
+
+      <CreateProjectModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+      />
     </>
   );
 }

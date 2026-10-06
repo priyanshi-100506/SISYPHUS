@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from sqlalchemy import (
     Column, String, Boolean, Integer, Numeric, DateTime, ForeignKey, Index, UniqueConstraint, JSON
 )
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import declarative_base, relationship
 
 Base = declarative_base()
@@ -105,7 +105,7 @@ class Finding(Base):
     step_start = Column(Integer, nullable=False)
     step_end = Column(Integer, nullable=False)
     description = Column(String, nullable=False)
-    evidence = Column(JSONB, nullable=False)
+    evidence = Column(JSON, nullable=False)
     waste_tokens = Column(Integer, nullable=False, default=0)
     waste_ms = Column(Integer, nullable=False, default=0)
     waste_cost = Column(Numeric(10, 6), nullable=False, default=0)

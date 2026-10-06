@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, Copy, Check, Terminal } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { X, Copy, Check, Terminal, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createProject } from "@/lib/api";
 
@@ -16,6 +17,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
   onClose,
   onSuccess,
 }) => {
+  const router = useRouter();
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [language, setLanguage] = useState("python");
@@ -41,7 +43,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
         slug: slug || name.toLowerCase().replace(/[^a-z0-9]/g, "-"),
         language,
       });
-      const key = data.api_key || `sk_live_${Math.random().toString(36).substring(2, 18)}`;
+      const key = data.api_key!;
       if (typeof window !== "undefined") {
         try {
           localStorage.setItem(`sisyphus_key_${data.id}`, key);
@@ -54,19 +56,11 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
       onSuccess?.();
     } catch (err: any) {
       console.error("Create project error:", err);
-      // Clean fallback if backend is offline or needs auth
-      const mockKey = `sk_live_${Math.random().toString(36).substring(2, 18)}`;
-      const mockId = "proj_" + Math.random().toString(36).substring(2, 8);
-      if (typeof window !== "undefined") {
-        try {
-          localStorage.setItem(`sisyphus_key_${mockId}`, mockKey);
-        } catch (_) {}
-      }
-      setCreatedData({
-        id: mockId,
-        api_key: mockKey,
-      });
-      onSuccess?.();
+      const msg =
+        err?.message?.includes("Failed to fetch") || err?.message?.includes("NetworkError")
+          ? "Cannot reach the backend. Make sure the API server is running on port 8000."
+          : err?.message || "Failed to create project. Please try again.";
+      setErrorMsg(msg);
     } finally {
       setLoading(false);
     }
@@ -215,9 +209,21 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
               </pre>
             </div>
 
-            <div className="pt-2 flex justify-end">
+            <div className="pt-2 flex justify-end gap-2">
               <Button variant="secondary" onClick={onClose}>
-                Done
+                Close
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => {
+                  onClose();
+                  if (createdData?.id) {
+                    router.push(`/dashboard/project/${createdData.id}`);
+                  }
+                }}
+              >
+                Go to Dashboard
+                <ArrowRight className="w-3.5 h-3.5 ml-1" />
               </Button>
             </div>
           </div>

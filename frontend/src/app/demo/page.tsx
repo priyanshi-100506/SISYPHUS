@@ -23,14 +23,17 @@ function DemoContent() {
   const [evidenceFinding, setEvidenceFinding] = useState<Finding | null>(null);
   const [simulationFinding, setSimulationFinding] = useState<Finding | null>(null);
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(!!runId);
+  const [error, setError] = useState<string | null>(null);
   const [liveRun, setLiveRun] = useState<any>(null);
   const [liveEvents, setLiveEvents] = useState<EventData[]>([]);
   const [liveFindings, setLiveFindings] = useState<Finding[]>([]);
+  const [isLiveData, setIsLiveData] = useState(false);
 
   const loadRunData = async () => {
     if (!runId) return;
     setLoading(true);
+    setError(null);
     try {
       const [detail, events, findings] = await Promise.all([
         fetchRunDetail(runId),
@@ -54,6 +57,7 @@ function DemoContent() {
           timestamp: e.timestamp,
         }));
         setLiveEvents(mappedEvents);
+        setIsLiveData(true);
       }
 
       if (findings && findings.length > 0) {
@@ -73,7 +77,8 @@ function DemoContent() {
         setLiveFindings(mappedFindings);
       }
     } catch (err) {
-      console.warn("Failed to fetch live run data, falling back to mock:", err);
+      console.warn("Failed to fetch live run data, falling back to demo:", err);
+      setError("Could not load run from backend — showing demo data.");
     } finally {
       setLoading(false);
     }
@@ -244,6 +249,18 @@ function DemoContent() {
 
   const events = liveEvents.length > 0 ? liveEvents : defaultEvents;
   const findings = liveFindings.length > 0 ? liveFindings : defaultFindings;
+  const usingDemoData = !isLiveData;
+
+  // Derive the effective run status for display:
+  // The DB status is 'completed', 'failed', etc. — never 'loop'.
+  // We show 'loop_detected' when the run is complete AND has loop-type findings.
+  const hasLoopFindings = findings.some(
+    (f) => f.type === "REPEATED_TOOL" || f.type === "STATE_LOOP" || f.type === "TOOL_OSCILLATION"
+  );
+  const displayStatus =
+    liveRun?.status === "completed" && hasLoopFindings
+      ? "loop_detected"
+      : liveRun?.status || (hasLoopFindings ? "loop_detected" : "completed");
 
   const totalStepsCount = events.length;
   const totalTokensCount = events.reduce((acc, e) => acc + e.tokens_in + e.tokens_out, 0);
@@ -262,6 +279,15 @@ function DemoContent() {
     ? [hoveredFinding.step_start, hoveredFinding.step_end]
     : null;
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-bg flex flex-col items-center justify-center gap-3 text-muted">
+        <div className="w-5 h-5 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+        <span className="font-mono text-xs">Loading trace…</span>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-bg text-text">
       {/* Top Header */}
@@ -276,22 +302,27 @@ function DemoContent() {
                 <span className="font-mono text-xs text-faint">
                   {liveRun ? `RUN #${String(liveRun.id).substring(0, 6).toUpperCase()}` : "RUN #8F30"}
                 </span>
-                <StatusBadge status={liveRun?.status || (findings.length > 0 ? "loop" : "completed")} />
+                <StatusBadge status={displayStatus} />
               </div>
               <h1 className="font-display text-xl font-medium text-text mt-0.5">
-                {liveRun?.input ? `"${liveRun.input}"` : '"Find three hotels in Paris with available rooms"'}
+                {liveRun?.input ? `"${liveRun.input}"` : '"Find the best hotels in Paris with available rooms tonight."'}
               </h1>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            {liveRun ? (
-              <span className="px-2.5 py-1 rounded bg-ok-bg text-ok text-xs font-mono border border-ok/20">
-                Live Trace
+            {usingDemoData ? (
+              <span className="px-2.5 py-1 rounded bg-surface-2 text-faint text-xs font-mono border border-border-soft">
+                Demo data
               </span>
             ) : (
-              <span className="px-2.5 py-1 rounded bg-stuck-bg text-stuck text-xs font-mono border border-stuck/20">
-                Demo Mode (Read-Only)
+              <span className="px-2.5 py-1 rounded bg-ok-bg text-ok text-xs font-mono border border-ok/20">
+                Live trace
+              </span>
+            )}
+            {error && (
+              <span className="px-2.5 py-1 rounded bg-warn-bg text-warn text-xs font-sans border border-warn/20">
+                {error}
               </span>
             )}
           </div>

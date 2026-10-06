@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 
@@ -29,4 +30,4 @@ async def healthz(db: AsyncSession = Depends(get_db)):
         await db.execute(text("SELECT 1"))
         return {"status": "ok", "db": "ok"}
     except Exception as e:
-        return {"status": "error", "db": str(e)}
+        return JSONResponse(status_code=503, content={"status": "error", "db": str(e)})

@@ -18,7 +18,7 @@ export const EvidenceDrawer: React.FC<EvidenceDrawerProps> = ({
   if (!finding) return null;
 
   const copyJson = () => {
-    navigator.clipboard.writeText(JSON.stringify(finding, null, 2));
+    navigator.clipboard.writeText(JSON.stringify(finding.evidence, null, 2));
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
