@@ -58,8 +58,8 @@ flowchart TD
 ### 1. Clone and configure
 
 ```bash
-git clone https://github.com/your-org/sisyphus.git
-cd sisyphus
+git clone https://github.com/priyanshi-100506/SISYPHUS.git
+cd SISYPHUS
 cp .env.example .env          # edit if needed (defaults work for local dev)
 ```
 
