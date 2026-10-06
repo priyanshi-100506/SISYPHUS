@@ -17,9 +17,9 @@ Modern LLM-based agents frequently fail silently by entering repetitive tool exe
 ```mermaid
 flowchart TD
     subgraph AgentClient [Client Agent / SDK]
-        A1[Agent Turn Loop] -->|POST /api/v1/runs| B1[Run Management Service]
-        A1 -->|POST /api/v1/runs/{id}/events| B2[Idempotent Batch Ingestion]
-        A1 -->|POST /api/v1/runs/{id}/complete| B3[Run Completion Trigger]
+        A1[Agent Turn Loop] -->|"POST /api/v1/runs"| B1[Run Management Service]
+        A1 -->|"POST /api/v1/runs/:id/events"| B2[Idempotent Batch Ingestion]
+        A1 -->|"POST /api/v1/runs/:id/complete"| B3[Run Completion Trigger]
     end
 
     subgraph BackendService [FastAPI Backend Service]
@@ -48,7 +48,7 @@ flowchart TD
         UI3[Finding Cards & Evidence Drawer]
         UI4[Guard Simulation & Policy Generator]
         
-        UI1 & UI2 & UI3 & UI4 <-->|REST API| BackendService
+        UI1 & UI2 & UI3 & UI4 <-->|"REST API"| BackendService
     end
 ```
 
