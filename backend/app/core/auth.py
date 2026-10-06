@@ -30,6 +30,22 @@ async def get_current_dev_user(
         await db.refresh(user)
     return user
 
+async def get_project_by_api_key_or_public(
+    credentials: HTTPAuthorizationCredentials = Security(security),
+    db: AsyncSession = Depends(get_db)
+) -> Project | None:
+    """
+    Validates Bearer sk_live_... key if present, or allows public reading of runs in dev.
+    """
+    if not credentials or not credentials.credentials:
+        return None
+
+    token = credentials.credentials
+    key_hash = hash_api_key(token)
+
+    result = await db.execute(select(Project).where(Project.api_key_hash == key_hash))
+    return result.scalar_one_or_none()
+
 async def get_project_by_api_key(
     credentials: HTTPAuthorizationCredentials = Security(security),
     db: AsyncSession = Depends(get_db)
@@ -56,3 +72,4 @@ async def get_project_by_api_key(
         )
 
     return project
+

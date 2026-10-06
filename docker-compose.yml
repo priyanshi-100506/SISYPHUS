@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: sisyphus
       POSTGRES_DB: sisyphus
     ports:
-      - "5432:5432"
+      - "5436:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -21,6 +21,8 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: sisyphus_backend
+    volumes:
+      - ./backend:/app
     ports:
       - "8000:8000"
     environment:
@@ -38,6 +40,9 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: sisyphus_frontend
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
     ports:
       - "3000:3000"
     environment:

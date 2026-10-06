@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SISYPHUS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F1F3F9;--surface:#fff;--s2:#E8ECF5;--bd:#CDD5E6;--soft:#DEE3EF;--tx:#1F0A12;--mu:#51404A;--fa:#766670;--ac:#3D5794;--acl:#2C4272;--tick:#9AACD0;--st:#8A1530;--sf:#5C0F1E;--ok:#1E7A56;--wn:#8F6416;--dg:#BE2E3A;--bt:#fff;--rg:inset 0 1px 0 rgba(255,255,255,.55);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12080C;--surface:#1B0E14;--s2:#25141C;--bd:#3A2230;--soft:#2B1822;--tx:#F2EBEE;--mu:#B8A8B0;--fa:#85727C;--ac:#8FA3C9;--acl:#B7C5E0;--tick:#5F77A6;--st:#C65A74;--sf:#5C0F1E;--ok:#7FC4A4;--wn:#E3B25C;--dg:#F0737C;--bt:#12080C;--rg:inset 0 1px 0 rgba(183,197,224,.18)}}
+:root[data-theme="dark"]{--bg:#12080C;--surface:#1B0E14;--s2:#25141C;--bd:#3A2230;--soft:#2B1822;--tx:#F2EBEE;--mu:#B8A8B0;--fa:#85727C;--ac:#8FA3C9;--acl:#B7C5E0;--tick:#5F77A6;--st:#C65A74;--sf:#5C0F1E;--ok:#7FC4A4;--wn:#E3B25C;--dg:#F0737C;--bt:#12080C;--rg:inset 0 1px 0 rgba(183,197,224,.18)}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 64px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:400 14px/1.5 Geist,system-ui,sans-serif}
+[hidden]{display:none!important}
+button{font:inherit;color:inherit;cursor:pointer}
+code,pre,.mono{font-family:"Geist Mono",ui-monospace,Menlo,monospace;font-size:.92em}
+:focus-visible{outline:2px solid var(--acl);outline-offset:2px}
+h1,h2,h3,p{margin:0}h2{font-size:16px;font-weight:600}h3{font-size:14px;font-weight:600}
+.d,.hero h1,.tile b,.met b,.pm b{font-family:Fraunces,Georgia,serif;font-optical-sizing:auto;font-variant-numeric:tabular-nums}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;display:flex;align-items:center;gap:12px;padding:12px max(20px,5vw);background:var(--bg);border-bottom:1px solid var(--soft)}
+.wm{font-weight:600;letter-spacing:.18em;color:var(--tx);text-decoration:none}
+nav{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
+nav button,.ghost{background:none;border:0;padding:6px 10px;border-radius:8px;color:var(--mu)}
+nav button[aria-current=page]{color:var(--tx);background:var(--s2);box-shadow:var(--rg)}
+.wrap{max-width:1160px;margin:0 auto;padding:32px max(20px,5vw) 56px}
+.btn{border:1px solid var(--bd);background:none;border-radius:10px;padding:9px 16px;font-weight:500}.btn:hover{background:var(--s2)}
+.btn.p{background:var(--ac);border-color:transparent;color:var(--bt);box-shadow:var(--rg)}.btn.p:hover{background:var(--acl)}
+.btns{display:flex;gap:10px;flex-wrap:wrap}
+.hero{position:relative;max-width:1400px;margin:0 auto;min-height:600px;display:grid;grid-template-columns:1.05fr 1fr;gap:32px;align-items:center;padding:48px max(20px,5vw);overflow:hidden}
+.paint{position:absolute;inset:0 0 0 42%;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.015 .45' numOctaves='2'/></filter><rect width='240' height='240' filter='url(%23n)'/></svg>"),linear-gradient(158deg,transparent 49.6%,rgba(255,255,255,.4) 50%,transparent 50.7%),linear-gradient(158deg,#8FA3C9 50%,#5C0F1E 50%);background-blend-mode:soft-light,normal,normal;-webkit-mask-image:linear-gradient(90deg,transparent,#000 30%);mask-image:linear-gradient(90deg,transparent,#000 30%)}
+:root[data-theme=dark] .paint{filter:brightness(.74)}
+.hero>div:not(.paint){position:relative}
+.hero h1{font-size:clamp(40px,6vw,64px);line-height:1.05;font-weight:500;letter-spacing:-.01em;margin-bottom:20px}
+.hero p{max-width:46ch;color:var(--mu);font-size:16px;margin-bottom:28px}
+.panel,.card{background:var(--surface);border:1px solid var(--soft);border-radius:14px;padding:20px;box-shadow:var(--rg)}
+.panel{border-color:var(--bd)}.pl{color:var(--mu);margin-bottom:8px}
+.pm,.met{display:flex;gap:28px;flex-wrap:wrap;margin-bottom:14px}
+.pm b,.met b{display:block;font-size:30px;font-weight:500;line-height:1.1}.pm span,.met span{color:var(--mu);font-size:13px}
+.panel .pf{font-size:14px;color:var(--tx);margin:12px 0 0;max-width:none}
+.mm{width:100%;height:auto;display:block}.mm .stroke{transform-box:fill-box;transform-origin:0 50%}.mm.hl .stroke path:first-child{filter:brightness(1.3)}
+@media (prefers-reduced-motion:no-preference){.mm .stroke.go{animation:draw .7s ease-out both}@keyframes draw{from{transform:scaleX(0)}}}
+.how{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:28px;padding-top:24px}
+.how .n{font:500 28px Fraunces,Georgia,serif;color:var(--ac)}.how h3{margin:6px 0 4px}.how p{color:var(--mu)}
+.cm{display:block;margin-top:10px;padding:8px 10px;background:var(--s2);border-radius:8px;overflow-x:auto;white-space:nowrap}
+.hd{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+.hd h1{font:500 32px/1.15 Fraunces,Georgia,serif}.m{color:var(--mu)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
+.tile{background:var(--surface);border:1px solid var(--soft);border-radius:10px;padding:14px 16px}
+.tile span{color:var(--mu);font-size:13px}.tile b{display:block;font-size:36px;font-weight:500;line-height:1.15}.tile b.s{color:var(--st)}
+.leg{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;color:var(--mu);font-size:13px}.leg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px}
+.fl{display:flex;gap:6px;margin:24px 0 8px;align-items:center}.fl h2{margin-right:auto}
+.chipb{border:1px solid var(--bd);background:none;border-radius:999px;padding:3px 12px;color:var(--mu)}.chipb[aria-pressed=true]{background:var(--s2);color:var(--tx)}
+.ow{overflow-x:auto}.rl{min-width:640px}
+.rr{display:grid;grid-template-columns:140px 64px 70px 80px 80px 64px 1fr;gap:12px;align-items:center;width:100%;padding:10px 8px;border:0;border-bottom:1px solid var(--soft);background:none;text-align:left}
+button.rr:hover{background:var(--s2)}.rr .mono{color:var(--tx)}.rr span:last-child{color:var(--fa);text-align:right}
+.bd{display:inline-flex;gap:6px;align-items:center;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:500;color:var(--c);background:color-mix(in srgb,var(--c) 14%,transparent);white-space:nowrap}
+.b-ok{--c:var(--ok)}.b-loop{--c:var(--st)}.b-to,.b-fail{--c:var(--dg)}
+.rh{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:6px}.rh h1{font:500 28px Fraunces,Georgia,serif}
+.q{font:500 20px/1.3 Fraunces,Georgia,serif;margin:6px 0 20px;max-width:60ch}
+.mmw{background:var(--surface);border:1px solid var(--soft);border-radius:14px;padding:12px 16px;margin:4px 0 24px;cursor:crosshair}
+.cols{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:24px;align-items:start}
+.tlw{overflow-x:auto}.tl{min-width:560px}
+.row{display:grid;grid-template-columns:2.2rem 6.6rem 1fr 4.6rem 6rem;gap:10px;align-items:center;width:100%;padding:6px 10px;border:0;border-left:3px solid transparent;background:none;text-align:left}
+.row>*{font-family:"Geist Mono",ui-monospace,monospace;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .n,.row .ms,.row .tk{color:var(--fa)}.row .ms,.row .tk{text-align:right}.row .in{color:var(--mu)}
+.row.t{color:var(--fa)}.row:hover{background:var(--s2)}.row.sel{background:var(--s2);box-shadow:var(--rg)}
+.row.f{border-left-color:var(--st);background:color-mix(in srgb,var(--st) 10%,transparent)}.row.hl{background:color-mix(in srgb,var(--st) 24%,transparent)}
+.chip{font-style:normal;margin-left:8px;color:var(--st);font-family:Geist,sans-serif;font-size:12px}
+.dt{margin:0 0 4px 3px;padding:8px 14px;font:12px/1.7 "Geist Mono",monospace;color:var(--mu);background:var(--s2)}
+.side{position:sticky;top:76px;display:grid;gap:12px}
+.fc{background:var(--surface);border:1px solid var(--soft);border-left:3px solid var(--st);border-radius:14px;padding:16px}
+.fh{display:flex;justify-content:space-between;gap:8px;margin-bottom:6px}.sv{font-size:12px;font-weight:500;border:1px solid var(--st);color:var(--st);border-radius:999px;padding:0 10px}
+.fc p+p{margin-top:6px}.fc details{margin-top:10px;color:var(--mu)}.fc summary{cursor:pointer}.fc details p{margin-top:6px}
+.ac{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}.ac .btn{padding:6px 12px}
+.ev{margin:12px 0 0;padding:12px;background:var(--s2);border-radius:8px;overflow:auto;font-size:12px}
+.gl{margin:10px 0 4px;color:var(--mu);font-size:13px}
+footer{padding:24px max(20px,5vw);color:var(--fa);border-top:1px solid var(--soft)}
+@media (max-width:820px){.hero{grid-template-columns:1fr}.paint{inset:58% 0 0 0;-webkit-mask-image:linear-gradient(180deg,transparent,#000 30%);mask-image:linear-gradient(180deg,transparent,#000 30%)}.cols{grid-template-columns:1fr}.side{position:static}}
+</style>
+</head>
+<body>
+<header class="top">
+  <a class="wm" href="#landing">SISYPHUS</a>
+  <nav aria-label="Prototype views"><button data-go="landing">Landing</button><button data-go="dashboard">Dashboard</button><button data-go="run">Run 8F30</button></nav>
+  <button class="ghost" id="th">Theme</button>
+</header>
+<main>
+<section class="view" id="v-landing">
+  <div class="hero">
+    <div class="paint" aria-hidden="true"></div>
+    <div>
+      <h1>See where your AI agent gets stuck.</h1>
+      <p>Send your agent's tool calls to SISYPHUS. It shows which calls repeated, which retries failed, and what they cost.</p>
+      <div class="btns"><button class="btn p" data-go="run">Try the demo</button><button class="btn" data-go="dashboard">Create a project</button></div>
+    </div>
+    <div class="panel"><div class="pl">Demo run</div><div class="pm" id="lp"></div><div id="lmm"></div><p class="pf" id="lf"></p></div>
+  </div>
+  <div class="wrap" style="padding-top:8px">
+    <h2 class="d" style="font-size:24px;font-weight:500">How it works</h2>
+    <div class="how">
+      <div><div class="n">1</div><h3>Create a project</h3><p>Copy the API key. It is shown once.</p><code class="cm">sk_live_8af2…</code></div>
+      <div><div class="n">2</div><h3>Send your tool calls</h3><p>Post events in batches of up to 500.</p><code class="cm">POST /api/v1/runs/{id}/events</code></div>
+      <div><div class="n">3</div><h3>Read the findings</h3><p>Each run is checked for five patterns when you complete it.</p><code class="cm">POST /api/v1/runs/{id}/complete</code></div>
+      <div><div class="n">4</div><h3>Trace it to the steps</h3><p>Open a finding to see the exact calls and hashes.</p><code class="cm">GET /api/v1/runs/{id}/findings</code></div>
+    </div>
+  </div>
+</section>
+
+<section class="view wrap" id="v-dashboard" hidden>
+  <div class="hd"><div><h1 class="d" style="font:500 32px/1.15 Fraunces,Georgia,serif">Research Agent</h1><p class="m">proj_8af21, last 14 days</p></div></div>
+  <div class="tiles">
+    <div class="tile"><span>Runs</span><b>143</b></div>
+    <div class="tile"><span>Loops</span><b class="s">7</b></div>
+    <div class="tile"><span>Failed</span><b>12</b></div>
+    <div class="tile"><span>Tokens</span><b>184,291</b></div>
+  </div>
+  <div class="card"><h2>Runs per day</h2><div id="ch" style="margin-top:12px"></div>
+    <div class="leg"><span><i style="background:var(--tick)"></i>Completed</span><span><i style="background:var(--sf);box-shadow:inset 0 2px 0 var(--st)"></i>Loop detected</span><span><i style="background:var(--dg)"></i>Failed</span></div></div>
+  <div class="fl"><h2>Recent runs</h2><button class="chipb" data-f="all" aria-pressed="true">All</button><button class="chipb" data-f="loop" aria-pressed="false">Loops</button><button class="chipb" data-f="fail" aria-pressed="false">Failed</button></div>
+  <div class="ow"><div class="rl" id="rl"></div></div>
+  <p class="m" style="margin-top:10px">The demo opens run 8F30.</p>
+</section>
+
+<section class="view wrap" id="v-run" hidden>
+  <div class="rh"><h1>Run <span class="mono">8F30</span></h1><span class="bd b-loop">↻ Loop detected</span></div>
+  <p class="q">Find three Python web frameworks and compare them.</p>
+  <div class="met" id="met"></div>
+  <div class="mmw" id="rmm" title="Click to jump to a step"></div>
+  <div class="cols">
+    <div><h2 style="margin-bottom:8px">Execution</h2><div class="tlw"><div class="tl" id="tl"></div></div><p class="m" style="margin-top:8px">Press j and k to move between steps. Select a step for its hashes.</p></div>
+    <div class="side">
+      <h2>Findings</h2><div id="fd" style="display:grid;gap:12px"></div>
+      <div class="card" id="gd" hidden><h3>Guard simulation</h3><p class="m" style="margin-top:4px">Rule: block an identical tool call after the third. Simulated from the recorded trace. Your agent is not re-run.</p>
+        <div class="gl">Recorded</div><div id="g1"></div><div class="gl">With guard</div><div id="g2"></div><p id="gs" style="margin-top:10px"></p></div>
+    </div>
+  </div>
+</section>
+</main>
+<footer>Prototype with demo data. Run 8F30 is a recorded example.</footer>
+
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const f0=n=>n.toLocaleString('en-US'),sec=m=>(m/1000).toFixed(1),usd=c=>'$'+c.toFixed(2);
+const N={t:'think',s:'search',r:'read_url',f:'summarize',e:'end'},Q='django vs flask vs fastapi benchmarks',RS=6,RE=16;
+const L=`t|Plan: three frameworks, then compare|312
+s|python web frameworks 2026|912
+t||341
+r|fastapi.tiangolo.com|1208
+t||297
+s|${Q}|874
+t||358
+s|${Q}|861
+t||326
+s|${Q}|902
+t||349
+s|${Q}|847
+t||331
+s|${Q}|889
+t||364
+s|${Q}|858
+t||318
+r|flask.palletsprojects.com|1104
+t||372
+r|djangoproject.com|1321
+t||305
+s|fastapi async performance|796
+t||344
+r|techempower.com/benchmarks|1893
+t||381
+s|flask production deployment|818
+t||336
+r|docs.djangoproject.com/en/5.1/topics/async|1047
+t||327
+f|Compare three frameworks|1460
+e||0`.split('\n').map((l,i)=>{const[k,x,m]=l.split('|'),n=i+1,t=k==='t';return{n,k,x,ms:+m,ti:t?220+n*14+n*37%53:52+n*19%40,to:t?70+n*29%41:10+n*13%30}});
+const sum=(a,f)=>a.reduce((s,e)=>s+f(e),0),cost=e=>e.ti*3e-6+e.to*15e-6;
+const agg=a=>({n:a.length,tok:sum(a,e=>e.ti+e.to),ms:sum(a,e=>e.ms),c:sum(a,cost)});
+const T=agg(L),W=agg(L.slice(6,16)),G=agg(L.slice(10,16));
+const h=s=>{let a=5381;for(const c of s)a=(a*33^c.charCodeAt(0))>>>0;return a.toString(16).padStart(8,'0')};
+const met=(b,s)=>`<div><b>${b}</b><span>${s}</span></div>`;
+let gid=0;
+function mm(cut){const id='g'+gid++,end=cut||RE,a=(RS-1)*20+2,b=end*20-2;
+  const p=`M${a+8} 7L${a+70} 5L${b+7} 9L${b+3} 28L${b-7} 50L${a+60} 48L${a-6} 46L${a+1} 27Z`;
+  let s=`<svg class="mm" viewBox="0 0 620 56" role="img" aria-label="Steps ${RS} to ${RE} flagged as repeated search"><defs><linearGradient id="${id}" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".32"/><stop offset=".55" stop-color="#fff" stop-opacity="0"/></linearGradient></defs><g class="stroke"><path d="${p}" fill="var(--sf)"/><path d="${p}" fill="url(#${id})"/></g>`;
+  L.forEach(e=>{const x=(e.n-1)*20+10,hh=e.k==='t'?12:24,inR=e.n>=RS&&e.n<=end,gone=cut&&e.n>cut&&e.n<=RE;
+    s+=`<line x1="${x}" x2="${x}" y1="${28-hh/2}" y2="${28+hh/2}" stroke="${inR?'#E9C9D1':e.k==='t'?'var(--tick)':'var(--ac)'}" stroke-width="3" stroke-linecap="round" opacity="${gone?.2:1}"/>`});
+  if(cut)s+=`<rect x="${cut*20}" y="8" width="3" height="40" rx="1.5" fill="var(--ac)"/>`;
+  return s+'</svg>'}
+/* landing */
+$('#lp').innerHTML=met(T.n,'steps')+met(f0(T.tok),'tokens')+met(sec(T.ms)+' s','duration');
+$('#lmm').innerHTML=mm();
+$('#lf').innerHTML=`<code>search</code> ran 6 times with the same input. About ${f0(W.tok)} tokens wasted.`;
+/* dashboard */
+const DT=[9,12,8,11,10,7,6,13,12,9,11,14,10,11],DL=[0,1,0,0,1,0,0,1,0,0,1,2,0,1],DF=[1,0,1,2,0,1,0,1,2,0,1,1,1,1];
+const dn=i=>i<12?`Sep ${19+i}`:`Oct ${i-11}`;
+let c='<svg viewBox="0 0 570 164" width="100%" role="img" aria-label="Runs per day for the last 14 days"><line x1="0" x2="570" y1="140.5" y2="140.5" stroke="var(--soft)"/>';
+DT.forEach((t,i)=>{const x=i*40+10,ok=t-DL[i]-DF[i];let y=140;
+  const bar=(v,f,top)=>{if(!v)return'';y-=v*8;return`<rect x="${x}" y="${y}" width="28" height="${v*8}" rx="2" fill="${f}"/>${top?`<rect x="${x}" y="${y}" width="28" height="2" fill="var(--st)"/>`:''}`};
+  c+=`<g><title>${dn(i)}: ${ok} completed, ${DL[i]} loops, ${DF[i]} failed</title>${bar(ok,'var(--tick)')}${bar(DL[i],'var(--sf)',1)}${bar(DF[i],'var(--dg)')}</g>`});
+c+=`<g font-size="11" fill="var(--fa)"><text x="10" y="157">Sep 19</text><text x="304" y="157" text-anchor="middle">Sep 26</text><text x="562" y="157" text-anchor="end">Oct 2</text></g></svg>`;
+$('#ch').innerHTML=c;
+const B={ok:['✓','Completed'],loop:['↻','Loop detected'],to:['✕','Timeout'],fail:['✕','Failed']};
+const R=[['ok','8F31',12,'4.2 s','2,914','$0.02','6 min ago'],['loop','8F30',T.n,sec(T.ms)+' s',f0(T.tok),usd(sum(L,cost)),'41 min ago'],['ok','8F2F',9,'3.1 s','2,206','$0.01','1 h ago'],['to','8F2E',27,'42.2 s','6,031','$0.04','2 h ago'],['ok','8F2D',14,'5.8 s','3,477','$0.02','3 h ago'],['loop','8F2C',24,'15.9 s','7,102','$0.06','5 h ago'],['ok','8F2B',11,'3.9 s','2,688','$0.02','yesterday'],['fail','8F2A',5,'1.7 s','1,142','$0.01','yesterday']];
+function list(f){$('#rl').innerHTML=R.filter(r=>f==='all'||(f==='loop'?r[0]==='loop':r[0]==='to'||r[0]==='fail')).map(r=>{const t=r[1]==='8F30'?'button':'div';
+  return`<${t} class="rr" ${t==='button'?'data-go="run"':''}><span class="bd b-${r[0]}">${B[r[0]][0]} ${B[r[0]][1]}</span><span class="mono">#${r[1]}</span><span>${r[2]} steps</span><span class="mono">${r[3]}</span><span class="mono">${r[4]}</span><span class="mono">${r[5]}</span><span>${r[6]}</span></${t}>`}).join('')}
+list('all');
+$$('.chipb').forEach(b=>b.onclick=()=>{$$('.chipb').forEach(x=>x.setAttribute('aria-pressed',x===b));list(b.dataset.f)});
+/* run */
+$('#met').innerHTML=met(sec(T.ms)+' s','duration')+met(T.n,'steps')+met(f0(T.tok),'tokens')+met(usd(sum(L,cost)),'estimated cost');
+$('#rmm').innerHTML=mm();
+let rc=0;
+$('#tl').innerHTML=L.map(e=>{const fl=e.n>=RS&&e.n<=RE,r=e.k==='s'&&e.x===Q?++rc:0;
+  return`<button class="row ${e.k==='t'?'t':''} ${fl?'f':''}" data-n="${e.n}"><span class="n">${String(e.n).padStart(2,'0')}</span><span>${e.k==='t'?'◌':e.k==='e'?'■':'▸'} ${N[e.k]}</span><span class="in">${e.x}${r>1?`<i class="chip">repeat ${r} of 6</i>`:''}</span><span class="ms">${e.k==='e'?'':e.ms+' ms'}</span><span class="tk">${e.k==='e'?'':e.ti+'↑ '+e.to+'↓'}</span></button>`}).join('');
+$('#tl').onclick=ev=>{const b=ev.target.closest('.row');if(!b)return;const open=b.classList.contains('sel');
+  $$('.dt').forEach(d=>d.remove());$$('.row.sel').forEach(x=>x.classList.remove('sel'));if(open)return;
+  const e=L[b.dataset.n-1];b.classList.add('sel');
+  b.insertAdjacentHTML('afterend',`<div class="dt">input_hash ${h(e.k+e.x)}<br>output_hash ${h('o'+e.k+e.x+(e.k==='t'?e.n:''))}<br>${e.ti} tokens in, ${e.to} out</div>`)};
+$('#rmm').onclick=ev=>{const r=ev.currentTarget.getBoundingClientRect(),n=Math.min(31,Math.max(1,Math.ceil((ev.clientX-r.left)/r.width*31))),row=$(`.row[data-n="${n}"]`);row.scrollIntoView({block:'center',behavior:'smooth'});row.focus()};
+const hl=on=>{$$('.row').forEach(r=>{const n=+r.dataset.n;r.classList.toggle('hl',on&&n>=RS&&n<=RE)});$('#rmm .mm').classList.toggle('hl',on)};
+const FD=[
+ {t:'Repeated tool call',s:'High',d:'<code>search</code> ran 6 times with the same input (steps 6–16).',w:1,x:'The agent ran the same benchmark search six times between steps 6 and 16. Each call returned identical output, so the run made no progress in that range.',ev:{finding:'REPEATED_TOOL',tool:'search',input_hash:h('s'+Q),steps:[6,8,10,12,14,16],repetitions:6,rule:'same tool and input_hash, 3 or more'}},
+ {t:'No state progress',s:'Medium',d:'Steps 6–16 returned the same output 6 times. The run did not reach a new state.',ev:{finding:'STATE_LOOP',output_hash:h('os'+Q),steps:[6,8,10,12,14,16],repetitions:6,rule:'same output_hash, repeated 2 or more times'}}];
+$('#fd').innerHTML=FD.map(f=>`<article class="fc" tabindex="0"><div class="fh"><h3>${f.t}</h3><span class="sv">${f.s}</span></div><p>${f.d}</p>${f.w?`<p class="m">About ${f0(W.tok)} tokens, ${sec(W.ms)} s, ${usd(W.c)} wasted (steps 7–16).</p><details><summary>Explanation, written by an AI from the evidence above</summary><p>${f.x}</p></details>`:''}<div class="ac"><button class="btn" data-ev>View evidence</button>${f.w?'<button class="btn" data-gd>Simulate guard</button>':''}</div><pre class="ev" hidden>${JSON.stringify(f.ev,null,2)}</pre></article>`).join('');
+$$('.fc').forEach(c=>{['mouseenter','focusin'].forEach(t=>c.addEventListener(t,()=>hl(1)));['mouseleave','focusout'].forEach(t=>c.addEventListener(t,()=>hl(0)))});
+$('#g1').innerHTML=mm();$('#g2').innerHTML=mm(10);
+$('#gs').innerHTML=`Saved: 3 tool calls, ${G.n} steps, ${f0(G.tok)} tokens, ${sec(G.ms)} s, ${usd(G.c)}.`;
+/* shell */
+document.addEventListener('click',e=>{
+  const g=e.target.closest('[data-go]');if(g){location.hash=g.dataset.go;return}
+  if(e.target.closest('[data-ev]')){const p=e.target.closest('.fc').querySelector('.ev');p.hidden=!p.hidden}
+  if(e.target.closest('[data-gd]')){const d=$('#gd');d.hidden=!d.hidden;if(!d.hidden)d.scrollIntoView({block:'nearest',behavior:'smooth'})}});
+$('#th').onclick=()=>{const d=document.documentElement;d.dataset.theme=d.dataset.theme==='dark'?'light':'dark'};
+addEventListener('keydown',e=>{if(location.hash!=='#run')return;const rows=$$('.row'),i=rows.indexOf(document.activeElement);
+  if(e.key==='j')rows[Math.min(rows.length-1,i+1)].focus();if(e.key==='k')rows[Math.max(0,i-1)].focus()});
+function route(){const v=location.hash.slice(1),k=['landing','dashboard','run'].includes(v)?v:'landing';
+  $$('.view').forEach(s=>s.hidden=s.id!=='v-'+k);$$('nav button').forEach(b=>b.setAttribute('aria-current',b.dataset.go===k?'page':'false'));
+  scrollTo(0,0);$$('.view:not([hidden]) .stroke').forEach(s=>{s.classList.remove('go');void s.getBoundingClientRect();s.classList.add('go')})}
+addEventListener('hashchange',route);route();
+</script>
+</body>
+</html>

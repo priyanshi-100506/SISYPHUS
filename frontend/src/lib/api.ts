@@ -70,7 +70,18 @@ export async function createProject(data: {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error(`HTTP ${res.status}: Failed to create project`);
+  if (!res.ok) {
+    let message = `HTTP ${res.status}: Failed to create project`;
+    try {
+      const errJson = await res.json();
+      if (errJson?.detail?.error?.message) {
+        message = errJson.detail.error.message;
+      } else if (typeof errJson?.detail === "string") {
+        message = errJson.detail;
+      }
+    } catch (_) {}
+    throw new Error(message);
+  }
   return res.json();
 }
 

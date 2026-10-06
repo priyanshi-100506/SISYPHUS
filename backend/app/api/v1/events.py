@@ -5,7 +5,7 @@ from typing import Optional
 
 from app.db.session import get_db
 from app.db.models import Project
-from app.core.auth import get_project_by_api_key
+from app.core.auth import get_project_by_api_key, get_project_by_api_key_or_public
 from app.api.schemas.events import EventBatchIn, EventBatchOut, PaginatedEventsOut
 from app.services import event_service
 
@@ -26,6 +26,6 @@ async def get_events(
     after: Optional[int] = Query(None, description="Cursor sequence number"),
     limit: int = Query(100, ge=1, le=500),
     db: AsyncSession = Depends(get_db),
-    project: Project = Depends(get_project_by_api_key)
+    project: Project | None = Depends(get_project_by_api_key_or_public)
 ):
     return await event_service.get_events_paginated(db, project, run_id, after, limit)

@@ -4,7 +4,7 @@ from uuid import UUID
 
 from app.db.session import get_db
 from app.db.models import Project
-from app.core.auth import get_project_by_api_key
+from app.core.auth import get_project_by_api_key, get_project_by_api_key_or_public
 from app.api.schemas.runs import RunCreate, RunOut, CompleteRunIn, RunMetricsOut
 from app.api.schemas.findings import FindingOut
 from app.services import run_service
@@ -23,7 +23,7 @@ async def create_run(
 async def get_run(
     id: UUID,
     db: AsyncSession = Depends(get_db),
-    project: Project = Depends(get_project_by_api_key)
+    project: Project | None = Depends(get_project_by_api_key_or_public)
 ):
     return await run_service.get_run_by_id(db, project, id)
 
@@ -31,7 +31,7 @@ async def get_run(
 async def get_run_findings(
     id: UUID,
     db: AsyncSession = Depends(get_db),
-    project: Project = Depends(get_project_by_api_key)
+    project: Project | None = Depends(get_project_by_api_key_or_public)
 ):
     return await run_service.get_run_findings(db, project, id)
 
@@ -39,7 +39,7 @@ async def get_run_findings(
 async def get_run_metrics(
     id: UUID,
     db: AsyncSession = Depends(get_db),
-    project: Project = Depends(get_project_by_api_key)
+    project: Project | None = Depends(get_project_by_api_key_or_public)
 ):
     return await run_service.get_run_metrics(db, project, id)
 

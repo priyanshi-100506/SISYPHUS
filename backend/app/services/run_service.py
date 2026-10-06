@@ -24,10 +24,11 @@ async def create_run(db: AsyncSession, project: Project, data: RunCreate) -> Run
     await db.refresh(run)
     return RunOut.model_validate(run)
 
-async def get_run_by_id(db: AsyncSession, project: Project, run_id) -> RunOut:
-    res = await db.execute(
-        select(Run).where(Run.id == run_id, Run.project_id == project.id)
-    )
+async def get_run_by_id(db: AsyncSession, project: Project | None, run_id) -> RunOut:
+    stmt = select(Run).where(Run.id == run_id)
+    if project:
+        stmt = stmt.where(Run.project_id == project.id)
+    res = await db.execute(stmt)
     run = res.scalar_one_or_none()
     if not run:
         raise HTTPException(
@@ -36,10 +37,11 @@ async def get_run_by_id(db: AsyncSession, project: Project, run_id) -> RunOut:
         )
     return RunOut.model_validate(run)
 
-async def get_run_findings(db: AsyncSession, project: Project, run_id) -> list[FindingOut]:
-    run_res = await db.execute(
-        select(Run).where(Run.id == run_id, Run.project_id == project.id)
-    )
+async def get_run_findings(db: AsyncSession, project: Project | None, run_id) -> list[FindingOut]:
+    stmt = select(Run).where(Run.id == run_id)
+    if project:
+        stmt = stmt.where(Run.project_id == project.id)
+    run_res = await db.execute(stmt)
     run = run_res.scalar_one_or_none()
     if not run:
         raise HTTPException(

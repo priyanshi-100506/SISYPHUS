@@ -79,15 +79,16 @@ async def batch_ingest_events(
 
 async def get_events_paginated(
     db: AsyncSession,
-    project: Project,
+    project: Project | None,
     run_id,
     after: Optional[int] = None,
     limit: int = 100
 ) -> PaginatedEventsOut:
-    # Verify run exists and belongs to project
-    res = await db.execute(
-        select(Run).where(Run.id == run_id, Run.project_id == project.id)
-    )
+    # Verify run exists
+    stmt = select(Run).where(Run.id == run_id)
+    if project:
+        stmt = stmt.where(Run.project_id == project.id)
+    res = await db.execute(stmt)
     run = res.scalar_one_or_none()
     if not run:
         raise HTTPException(

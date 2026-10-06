@@ -13,11 +13,13 @@ import { EvidenceDrawer } from "@/components/findings/evidence-drawer";
 import { GuardSimulationModal } from "@/components/simulation/guard-simulation";
 import { Button } from "@/components/ui/button";
 import { fetchRunEvents, fetchRunFindings, fetchRunDetail, EventDataApi, FindingDataApi } from "@/lib/api";
+import { DEMO_SCENARIOS, DemoScenario } from "@/lib/demo-scenarios";
 
 function DemoContent() {
   const searchParams = useSearchParams();
   const runId = searchParams?.get("run_id");
 
+  const [selectedScenarioId, setSelectedScenarioId] = useState<string>(DEMO_SCENARIOS[0].id);
   const [selectedStep, setSelectedStep] = useState<number | null>(null);
   const [hoveredFinding, setHoveredFinding] = useState<Finding | null>(null);
   const [evidenceFinding, setEvidenceFinding] = useState<Finding | null>(null);
@@ -90,177 +92,24 @@ function DemoContent() {
     }
   }, [runId]);
 
-  // Default Mocked seed events for flawed run demo
-  const defaultEvents: EventData[] = [
-    {
-      sequence_number: 1,
-      event_type: "think",
-      input_preview: "Analyzing request: Find three hotels in Paris",
-      status: "ok",
-      tokens_in: 320,
-      tokens_out: 45,
-      latency_ms: 210,
-      timestamp: "2026-10-01T10:00:01Z",
-    },
-    {
-      sequence_number: 2,
-      event_type: "tool",
-      tool_name: "search",
-      input_preview: "query: Paris hotels",
-      output_preview: "results: 10 hotels found",
-      status: "ok",
-      tokens_in: 410,
-      tokens_out: 120,
-      latency_ms: 450,
-      timestamp: "2026-10-01T10:00:02Z",
-    },
-    {
-      sequence_number: 3,
-      event_type: "think",
-      input_preview: "Processing search results...",
-      status: "ok",
-      tokens_in: 512,
-      tokens_out: 60,
-      latency_ms: 310,
-      timestamp: "2026-10-01T10:00:03Z",
-    },
-    {
-      sequence_number: 4,
-      event_type: "tool",
-      tool_name: "search",
-      input_preview: "query: Paris hotels",
-      output_preview: "results: 10 hotels found",
-      status: "ok",
-      tokens_in: 410,
-      tokens_out: 120,
-      latency_ms: 440,
-      timestamp: "2026-10-01T10:00:04Z",
-    },
-    {
-      sequence_number: 5,
-      event_type: "tool",
-      tool_name: "search",
-      input_preview: "query: Paris hotels",
-      output_preview: "results: 10 hotels found",
-      status: "ok",
-      tokens_in: 410,
-      tokens_out: 120,
-      latency_ms: 430,
-      timestamp: "2026-10-01T10:00:05Z",
-    },
-    {
-      sequence_number: 6,
-      event_type: "tool",
-      tool_name: "search",
-      input_preview: "query: Paris hotels",
-      output_preview: "results: 10 hotels found",
-      status: "ok",
-      tokens_in: 410,
-      tokens_out: 120,
-      latency_ms: 445,
-      timestamp: "2026-10-01T10:00:06Z",
-    },
-    {
-      sequence_number: 7,
-      event_type: "tool",
-      tool_name: "search",
-      input_preview: "query: Paris hotels",
-      output_preview: "results: 10 hotels found",
-      status: "ok",
-      tokens_in: 410,
-      tokens_out: 120,
-      latency_ms: 450,
-      timestamp: "2026-10-01T10:00:07Z",
-    },
-    {
-      sequence_number: 8,
-      event_type: "tool",
-      tool_name: "search",
-      input_preview: "query: Paris hotels",
-      output_preview: "results: 10 hotels found",
-      status: "ok",
-      tokens_in: 410,
-      tokens_out: 120,
-      latency_ms: 435,
-      timestamp: "2026-10-01T10:00:08Z",
-    },
-    {
-      sequence_number: 9,
-      event_type: "tool",
-      tool_name: "search",
-      input_preview: "query: Paris hotels",
-      output_preview: "results: 10 hotels found",
-      status: "ok",
-      tokens_in: 410,
-      tokens_out: 120,
-      latency_ms: 440,
-      timestamp: "2026-10-01T10:00:09Z",
-    },
-    {
-      sequence_number: 10,
-      event_type: "think",
-      input_preview: "Attempting to summarize findings...",
-      status: "ok",
-      tokens_in: 600,
-      tokens_out: 250,
-      latency_ms: 500,
-      timestamp: "2026-10-01T10:00:10Z",
-    },
-  ];
+  const activeScenario = DEMO_SCENARIOS.find((s) => s.id === selectedScenarioId) || DEMO_SCENARIOS[0];
 
-  // Default Mock findings for demo run
-  const defaultFindings: Finding[] = [
-    {
-      id: "find_01",
-      type: "REPEATED_TOOL",
-      severity: "high",
-      step_start: 4,
-      step_end: 9,
-      description: "tool 'search' executed 6 times consecutively with identical query: 'Paris hotels'",
-      evidence: {
-        tool_name: "search",
-        input_hash: "a9f87c2b...",
-        total_calls: 6,
-        redundant_calls: 5,
-      },
-      waste_tokens: 2184,
-      waste_ms: 1800,
-      waste_cost: 0.0312,
-      explanation: "The agent repeatedly called the 'search' tool with the exact same input, indicating it did not store or reuse the initial result.",
-    },
-    {
-      id: "find_02",
-      type: "STATE_LOOP",
-      severity: "medium",
-      step_start: 4,
-      step_end: 9,
-      description: "Identical state hash revisited across steps 4 through 9 without state progress",
-      evidence: {
-        state_hash: "7f4c1e...",
-        cycle_length: 1,
-        repetitions: 6,
-      },
-      waste_tokens: 1500,
-      waste_ms: 1200,
-      waste_cost: 0.021,
-      explanation: "No state variables changed between execution turns.",
-    },
-  ];
-
-  const events = liveEvents.length > 0 ? liveEvents : defaultEvents;
-  const findings = liveFindings.length > 0 ? liveFindings : defaultFindings;
+  const events = isLiveData && liveEvents.length > 0 ? liveEvents : activeScenario.events;
+  const findings = isLiveData && liveFindings.length > 0 ? liveFindings : activeScenario.findings;
   const usingDemoData = !isLiveData;
 
-  // Derive the effective run status for display:
-  // The DB status is 'completed', 'failed', etc. — never 'loop'.
-  // We show 'loop_detected' when the run is complete AND has loop-type findings.
   const hasLoopFindings = findings.some(
     (f) => f.type === "REPEATED_TOOL" || f.type === "STATE_LOOP" || f.type === "TOOL_OSCILLATION"
   );
   const displayStatus =
-    liveRun?.status === "completed" && hasLoopFindings
-      ? "loop_detected"
-      : liveRun?.status || (hasLoopFindings ? "loop_detected" : "completed");
+    isLiveData
+      ? liveRun?.status === "completed" && hasLoopFindings
+        ? "loop_detected"
+        : liveRun?.status || (hasLoopFindings ? "loop_detected" : "completed")
+      : activeScenario.status;
+
+  const currentDuration = isLiveData && liveRun?.duration_ms ? liveRun.duration_ms : activeScenario.duration_ms;
+  const currentTitle = isLiveData && liveRun?.input ? `"${liveRun.input}"` : `"${activeScenario.query}"`;
 
   const totalStepsCount = events.length;
   const totalTokensCount = events.reduce((acc, e) => acc + e.tokens_in + e.tokens_out, 0);
@@ -273,7 +122,6 @@ function DemoContent() {
     type: f.type,
     description: f.description,
   }));
-
 
   const highlightedStepRange: [number, number] | null = hoveredFinding
     ? [hoveredFinding.step_start, hoveredFinding.step_end]
@@ -300,12 +148,12 @@ function DemoContent() {
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-mono text-xs text-faint">
-                  {liveRun ? `RUN #${String(liveRun.id).substring(0, 6).toUpperCase()}` : "RUN #8F30"}
+                  {isLiveData && liveRun ? `RUN #${String(liveRun.id).substring(0, 6).toUpperCase()}` : `SCENARIO #${activeScenario.tag}`}
                 </span>
                 <StatusBadge status={displayStatus} />
               </div>
               <h1 className="font-display text-xl font-medium text-text mt-0.5">
-                {liveRun?.input ? `"${liveRun.input}"` : '"Find the best hotels in Paris with available rooms tonight."'}
+                {currentTitle}
               </h1>
             </div>
           </div>
@@ -313,7 +161,7 @@ function DemoContent() {
           <div className="flex items-center gap-3">
             {usingDemoData ? (
               <span className="px-2.5 py-1 rounded bg-surface-2 text-faint text-xs font-mono border border-border-soft">
-                Demo data
+                Interactive Test Scenarios
               </span>
             ) : (
               <span className="px-2.5 py-1 rounded bg-ok-bg text-ok text-xs font-mono border border-ok/20">
@@ -331,9 +179,57 @@ function DemoContent() {
 
       {/* Main Content Area */}
       <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+        {/* Scenario Switcher Tabs */}
+        {!isLiveData && (
+          <div className="bg-surface border border-border-soft rounded-lg p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono uppercase tracking-wider text-muted font-semibold">
+                Select Scenario to Test on Frontend:
+              </span>
+              <span className="text-xs text-faint font-mono">
+                {DEMO_SCENARIOS.length} scenarios available
+              </span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+              {DEMO_SCENARIOS.map((sc) => {
+                const isSelected = sc.id === activeScenario.id;
+                return (
+                  <button
+                    key={sc.id}
+                    onClick={() => {
+                      setSelectedScenarioId(sc.id);
+                      setSelectedStep(null);
+                      setHoveredFinding(null);
+                    }}
+                    className={`text-left p-3 rounded-md border transition-all ${
+                      isSelected
+                        ? "bg-accent/10 border-accent text-accent shadow-sm"
+                        : "bg-surface-2/60 border-border-soft text-muted hover:border-border hover:text-text"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-1 mb-1">
+                      <span className="font-semibold text-xs truncate">{sc.title}</span>
+                      <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
+                        sc.status === "loop_detected"
+                          ? "bg-stuck-bg text-stuck"
+                          : sc.status === "failed"
+                          ? "bg-danger-bg text-danger"
+                          : "bg-ok-bg text-ok"
+                      }`}>
+                        {sc.tag}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-faint line-clamp-1 leading-snug">{sc.subtitle}</p>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Top Metric Tiles */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatTile label="Total duration" value={liveRun?.duration_ms ? `${(liveRun.duration_ms / 1000).toFixed(1)} s` : "18.4 s"} />
+          <StatTile label="Total duration" value={`${(currentDuration / 1000).toFixed(1)} s`} />
           <StatTile label="Total steps" value={totalStepsCount} />
           <StatTile label="Total tokens" value={totalTokensCount.toLocaleString()} />
           <StatTile label="Detected loops" value={findings.length} isStuck={findings.length > 0} subtext={`Waste: ${totalWasteTokens.toLocaleString()} tok ($${totalWasteCost.toFixed(2)})`} />
